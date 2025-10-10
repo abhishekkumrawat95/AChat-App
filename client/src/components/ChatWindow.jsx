@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useLayoutEffect, useState, useRef } from "react";
 import { db } from "../firebase";
 import { collection, query, onSnapshot, addDoc, serverTimestamp, orderBy, doc, writeBatch, setDoc } from "firebase/firestore";
 import './ChatWindow.css';
 
-const defaultAvatar = "https://static.vecteezy.com/system/resources/previews/020/765/399/non_2x/default-profile-account-unknown-icon-black-silhouette-free-vector.jpg"; // Generic default avatar
+const defaultAvatar = "https://static.vecteezy.com/system/resources/previews/020/765/399/non_2x/default-profile-account-unknown-icon-black-silhouette-free-vector.jpg";
 
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return '';
@@ -41,8 +41,10 @@ export default function ChatWindow({ user, chatWith, socket, onBack }) {
     }
   }, [messages, chatWith, user.email]);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  useLayoutEffect(() => {
+    if (bottomRef.current) {
+      bottomRef.current.scrollIntoView();
+    }
   }, [messages]);
 
   const sendMessage = async () => {
