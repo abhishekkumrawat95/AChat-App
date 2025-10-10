@@ -1,0 +1,56 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  background-color: #1a222d;
+  color: #fff;
+}
+
+.app-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow-x: hidden;
+  position: relative;
+}
+
+.chat-area {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #0e1621;
+}
+
+.welcome-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  color: #6c7a8b;
+}
+
+/* --- Mobile Responsive Styles --- */
+@media (max-width: 768px) {
+  .app-container {
+    flex-direction: column;
+  }
+
+  .sidebar, .chat-area {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .chat-area {
+    transform: translateX(100%);
+  }
+  
+  .app-container.mobile-chat-active .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .app-container.mobile-chat-active .chat-area {
+    transform: translateX(0);
+  }
+}
