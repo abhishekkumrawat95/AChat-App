@@ -1,9 +1,35 @@
+/* Add theme variables */
+:root {
+  --background-dark: #0e1621;
+  --sidebar-dark: #17212b;
+  --border-dark: #0f1924;
+  --text-dark: #fff;
+  --text-secondary-dark: #6c7a8b;
+  --hover-dark: #242f3d;
+
+  --background-light: #f0f2f5;
+  --sidebar-light: #ffffff;
+  --border-light: #d1d7db;
+  --text-light: #000;
+  --text-secondary-light: #657786;
+  --hover-light: #f5f5f5;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  background-color: #1a222d;
-  color: #fff;
 }
+
+.theme-dark {
+  background-color: var(--background-dark);
+  color: var(--text-dark);
+}
+
+.theme-light {
+  background-color: var(--background-light);
+  color: var(--text-light);
+}
+
 
 .app-container {
   display: flex;
@@ -13,11 +39,12 @@ body {
   position: relative;
 }
 
+.theme-dark .chat-area { background-color: var(--background-dark); }
+.theme-light .chat-area { background-color: var(--background-light); }
 .chat-area {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  background-color: #0e1621;
 }
 
 .welcome-screen {
@@ -25,15 +52,23 @@ body {
   justify-content: center;
   align-items: center;
   height: 100%;
-  color: #6c7a8b;
+}
+.theme-dark .welcome-screen { color: var(--text-secondary-dark); }
+.theme-light .welcome-screen { color: var(--text-secondary-light); }
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100vw;
+  font-size: 1.5rem;
 }
 
-/* --- Mobile Responsive Styles --- */
 @media (max-width: 768px) {
   .app-container {
     flex-direction: column;
   }
-
   .sidebar, .chat-area {
     width: 100%;
     height: 100%;
@@ -41,15 +76,12 @@ body {
     top: 0;
     transition: transform 0.3s ease-in-out;
   }
-
   .chat-area {
     transform: translateX(100%);
   }
-  
   .app-container.mobile-chat-active .sidebar {
     transform: translateX(-100%);
   }
-
   .app-container.mobile-chat-active .chat-area {
     transform: translateX(0);
   }

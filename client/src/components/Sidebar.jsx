@@ -3,13 +3,14 @@ import { db } from "../firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import './Sidebar.css';
 
-export default function Sidebar({ user, chatHistory, onlineUserEmails, onSelectChat, socket }) {
+const defaultAvatar = "https://static.vecteezy.com/system/resources/previews/020/765/399/non_2x/default-profile-account-unknown-icon-black-silhouette-free-vector.jpg"; // Default avatar
+
+export default function Sidebar({ user, chatHistory, onlineUserEmails, onSelectChat, socket, onProfileOpen }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
-  const [unreadCounts, setUnreadCounts] = useState({}); // Stores unread counts
+  const [unreadCounts, setUnreadCounts] = useState({});
 
   useEffect(() => {
-    // This logic now increments the count for the sender
     const handleNotification = ({ from }) => {
       setUnreadCounts((prevCounts) => ({
         ...prevCounts,
@@ -23,12 +24,10 @@ export default function Sidebar({ user, chatHistory, onlineUserEmails, onSelectC
   const handleSearch = async (e) => {
     const term = e.target.value;
     setSearchTerm(term);
-
     if (term.trim() === "") {
         setSearchResults([]);
         return;
     }
-    
     const usersRef = collection(db, "users");
     const q = query(usersRef, where("username", ">=", term.toLowerCase()), where("username", "<=", term.toLowerCase() + '\uf8ff'));
     const querySnapshot = await getDocs(q);
@@ -40,11 +39,9 @@ export default function Sidebar({ user, chatHistory, onlineUserEmails, onSelectC
     onSelectChat(selectedUser);
     setSearchTerm("");
     setSearchResults([]);
-    
-    // When a chat is selected, reset its unread count
     setUnreadCounts((prevCounts) => {
       const newCounts = { ...prevCounts };
-      delete newCounts[selectedUser.email]; // Remove the entry for the selected chat
+      delete newCounts[selectedUser.email];
       return newCounts;
     });
   };
@@ -54,21 +51,18 @@ export default function Sidebar({ user, chatHistory, onlineUserEmails, onSelectC
   return (
     <aside className="sidebar">
       <header className="sidebar-header">
+        <button className="menu-button" onClick={onProfileOpen}>☰</button>
         <h3>AChat</h3>
       </header>
       <div className="search-container">
-        <input
-          type="text"
-          placeholder="Search for new users..."
-          value={searchTerm}
-          onChange={handleSearch}
-          className="search-input"
-        />
+        <input type="text" placeholder="Search for new users..." value={searchTerm} onChange={handleSearch} className="search-input"/>
       </div>
       <ul className="user-list">
           {usersToDisplay.length === 0 && searchTerm.trim() !== "" && <li className="no-results">No users found.</li>}
           {usersToDisplay.map((u) => (
             <li key={u.uid} onClick={() => handleSelectChat(u)} className="user-list-item">
+              {/* NEW: Added profile picture to the list */}
+              <img src={u.photoURL || defaultAvatar} alt={u.name} className="sidebar-avatar" />
               <div className={onlineUserEmails.includes(u.email) ? 'online-indicator' : 'offline-indicator'}></div>
               <div className="user-info">
                 <span className="user-name">{u.name}</span>
@@ -76,7 +70,6 @@ export default function Sidebar({ user, chatHistory, onlineUserEmails, onSelectC
                     {searchTerm.trim() === "" ? (u.lastMessage || `@${u.username}`) : `@${u.username}`}
                 </span>
               </div>
-              {/* Display the count if it's greater than 0 */}
               {unreadCounts[u.email] > 0 && (
                 <div className="unread-count-badge">
                   {unreadCounts[u.email]}

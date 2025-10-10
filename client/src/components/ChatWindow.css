@@ -1,20 +1,36 @@
 .chat-header {
   padding: 10px 20px;
-  border-bottom: 1px solid #0f1924;
-  background-color: #17212b;
+  border-bottom: 1px solid var(--border-dark);
+  background-color: var(--sidebar-dark);
   display: flex;
   align-items: center;
+}
+.theme-light .chat-header {
+  background-color: var(--sidebar-light);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.header-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 15px;
 }
 
 .back-button {
   background: none;
   border: none;
-  color: #fff;
+  color: var(--text-dark);
   font-size: 1.5rem;
   margin-right: 15px;
   cursor: pointer;
   display: none;
 }
+.theme-light .back-button {
+  color: var(--text-light);
+}
+
 
 .chat-header-info {
   display: flex;
@@ -23,7 +39,10 @@
 
 .chat-header span {
   font-size: 0.9em;
-  color: #6c7a8b;
+  color: var(--text-secondary-dark);
+}
+.theme-light .chat-header span {
+  color: var(--text-secondary-light);
 }
 
 .message-container {
@@ -37,7 +56,7 @@
 .message-bubble {
   max-width: 70%;
   padding: 8px 14px 25px 14px; 
-  border-radius: 20px; /* A standard radius for all corners */
+  border-radius: 20px;
   margin-bottom: 10px;
   word-wrap: break-word;
   position: relative;
@@ -48,7 +67,6 @@
   color: white;
   align-self: flex-end;
   min-width: 70px;
-  /* NEW: Make the bottom-right corner sharp */
   border-bottom-right-radius: 5px;
 }
 
@@ -57,11 +75,12 @@
   color: white;
   align-self: flex-start;
   min-width: 40px;
-  /* NEW: Make the bottom-left corner sharp */
   border-bottom-left-radius: 5px;
 }
-
-/* The old ::after pseudo-element styles have been completely removed */
+.theme-light .message-bubble.received {
+  background-color: #e4e6eb;
+  color: #050505;
+}
 
 .message-text {
   margin: 0;
@@ -79,9 +98,11 @@
   align-items: center;
   gap: 4px;
 }
-
-.message-bubble.received .message-meta {
-    color: rgba(255, 255, 255, 0.5);
+.theme-light .message-bubble.sent .message-meta {
+  color: rgba(255, 255, 255, 0.8);
+}
+.theme-light .message-bubble.received .message-meta {
+  color: rgba(0, 0, 0, 0.6);
 }
 
 .status-ticks {
@@ -93,11 +114,17 @@
 .status-ticks.seen {
   color: white;
 }
+.theme-light .status-ticks.seen {
+  color: white; /* Blue on white doesn't look great, keeping it white for contrast */
+}
 
 .input-container {
   display: flex;
   padding: 20px;
-  background-color: #17212b;
+  background-color: var(--sidebar-dark);
+}
+.theme-light .input-container {
+  background-color: var(--sidebar-light);
 }
 
 .message-input {
@@ -105,9 +132,14 @@
   padding: 10px 15px;
   border: none;
   border-radius: 20px;
-  background-color: #242f3d;
-  color: #fff;
+  background-color: var(--hover-dark);
+  color: var(--text-dark);
   margin-right: 10px;
+}
+.theme-light .message-input {
+  background-color: var(--hover-light);
+  color: var(--text-light);
+  border: 1px solid var(--border-light);
 }
 
 .send-button {
