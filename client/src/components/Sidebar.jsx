@@ -1,26 +1,63 @@
 import React, { useState, useEffect } from "react";
 import { db } from "../firebase";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs, writeBatch, doc } from "firebase/firestore"; // Cleaned up imports
+import ContextMenu from "./ContextMenu";
+import UserListItem from "./UserListItem"; // Import the new component
 import './Sidebar.css';
 
-const defaultAvatar = "https://static.vecteezy.com/system/resources/previews/020/765/399/non_2x/default-profile-account-unknown-icon-black-silhouette-free-vector.jpg"; // Default avatar
-
-export default function Sidebar({ user, chatHistory, onlineUserEmails, onSelectChat, socket, onProfileOpen }) {
+export default function Sidebar({ user, chatHistory = [], onlineUserEmails, onSelectChat, socket, onProfileOpen }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [unreadCounts, setUnreadCounts] = useState({});
+  const [menu, setMenu] = useState({ visible: false, x: 0, y: 0, selectedUser: null });
+
+  const handleClearChat = async () => {
+    if (!menu.selectedUser) return;
+    const roomName = [user.email, menu.selectedUser.email].sort().join("_");
+    const messagesRef = collection(db, "chats", roomName, "messages");
+    
+    const querySnapshot = await getDocs(messagesRef);
+    if (querySnapshot.empty) {
+        setMenu({ visible: false });
+        return;
+    }
+    
+    const batch = writeBatch(db);
+    querySnapshot.docs.forEach(doc => batch.delete(doc.ref));
+    
+    const chatDocRef = doc(db, "chats", roomName);
+    batch.update(chatDocRef, {
+        lastMessage: "",
+        lastMessageTimestamp: null
+    });
+
+    await batch.commit();
+    setMenu({ visible: false });
+  };
+
+  const onLongPress = (e, u) => {
+    e.preventDefault();
+    setMenu({
+      visible: true,
+      x: e.pageX,
+      y: e.pageY,
+      selectedUser: u,
+      onClose: () => setMenu({ visible: false }),
+    });
+  };
+
+  const onClick = (u) => {
+    handleSelectChat(u);
+  };
 
   useEffect(() => {
     const handleNotification = ({ from }) => {
-      setUnreadCounts((prevCounts) => ({
-        ...prevCounts,
-        [from]: (prevCounts[from] || 0) + 1,
-      }));
+      setUnreadCounts((prev) => ({...prev, [from]: (prev[from] || 0) + 1 }));
     };
     socket.on("new_message_notification", handleNotification);
     return () => socket.off("new_message_notification", handleNotification);
   }, [socket]);
-  
+
   const handleSearch = async (e) => {
     const term = e.target.value;
     setSearchTerm(term);
@@ -39,45 +76,42 @@ export default function Sidebar({ user, chatHistory, onlineUserEmails, onSelectC
     onSelectChat(selectedUser);
     setSearchTerm("");
     setSearchResults([]);
-    setUnreadCounts((prevCounts) => {
-      const newCounts = { ...prevCounts };
+    setUnreadCounts((prev) => {
+      const newCounts = { ...prev };
       delete newCounts[selectedUser.email];
       return newCounts;
     });
   };
   
-  const usersToDisplay = searchTerm.trim() !== "" ? searchResults : chatHistory;
+  const isSearching = searchTerm.trim() !== "";
+  const usersToDisplay = isSearching ? searchResults : chatHistory;
 
   return (
-    <aside className="sidebar">
-      <header className="sidebar-header">
-        <button className="menu-button" onClick={onProfileOpen}>☰</button>
-        <h3>AChat</h3>
-      </header>
-      <div className="search-container">
-        <input type="text" placeholder="Search for new users..." value={searchTerm} onChange={handleSearch} className="search-input"/>
-      </div>
-      <ul className="user-list">
-          {usersToDisplay.length === 0 && searchTerm.trim() !== "" && <li className="no-results">No users found.</li>}
-          {usersToDisplay.map((u) => (
-            <li key={u.uid} onClick={() => handleSelectChat(u)} className="user-list-item">
-              {/* NEW: Added profile picture to the list */}
-              <img src={u.photoURL || defaultAvatar} alt={u.name} className="sidebar-avatar" />
-              <div className={onlineUserEmails.includes(u.email) ? 'online-indicator' : 'offline-indicator'}></div>
-              <div className="user-info">
-                <span className="user-name">{u.name}</span>
-                <span className="user-username">
-                    {searchTerm.trim() === "" ? (u.lastMessage || `@${u.username}`) : `@${u.username}`}
-                </span>
-              </div>
-              {unreadCounts[u.email] > 0 && (
-                <div className="unread-count-badge">
-                  {unreadCounts[u.email]}
-                </div>
-              )}
-            </li>
-          ))}
-      </ul>
-    </aside>
+    <>
+      <ContextMenu menu={menu} onClearChat={handleClearChat} />
+      <aside className="sidebar">
+        <header className="sidebar-header">
+          <button className="menu-button" onClick={onProfileOpen}>☰</button>
+          <h3>AChat</h3>
+        </header>
+        <div className="search-container">
+          <input type="text" placeholder="Search for new users..." value={searchTerm} onChange={handleSearch} className="search-input"/>
+        </div>
+        <ul className="user-list">
+            {usersToDisplay.length === 0 && isSearching && <li className="no-results">No users found.</li>}
+            {usersToDisplay.map((u) => (
+              <UserListItem
+                key={u.uid}
+                u={u}
+                isOnline={onlineUserEmails.includes(u.email)}
+                unreadCount={unreadCounts[u.email] || 0}
+                onClick={() => onClick(u)}
+                onLongPress={(e) => onLongPress(e, u)}
+                isSearching={isSearching}
+              />
+            ))}
+        </ul>
+      </aside>
+    </>
   );
 }

@@ -5,24 +5,22 @@ import { auth, db, storage } from '../firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { doc, updateDoc } from 'firebase/firestore';
 
-const defaultAvatar = "https://i.imgur.com/am6E4xZ.png"; // Default avatar
+// Your new default avatar URL
+const defaultAvatar = "https://static.vecteezy.com/system/resources/previews/020/765/399/non_2x/default-profile-account-unknown-icon-black-silhouette-free-vector.jpg";
 
 export default function ProfileSidebar({ user, isOpen, onClose, onThemeToggle }) {
   const fileInputRef = useRef(null);
 
   const handleImageUpload = async (e) => {
+    // ... upload logic remains the same
     const file = e.target.files[0];
     if (!file || !user) return;
-
     const storageRef = ref(storage, `profile_pictures/${user.uid}`);
     try {
       await uploadBytes(storageRef, file);
       const photoURL = await getDownloadURL(storageRef);
-      
       const userDocRef = doc(db, "users", user.uid);
       await updateDoc(userDocRef, { photoURL });
-      
-      // User state will update in real-time because of the onSnapshot listener in App.js
       onClose();
     } catch (error) {
       console.error("Error uploading image:", error);
@@ -44,6 +42,7 @@ export default function ProfileSidebar({ user, isOpen, onClose, onThemeToggle })
             style={{ display: 'none' }} 
             onChange={handleImageUpload} 
           />
+          {/* The src now uses your chosen default image */}
           <img 
             src={user.photoURL || defaultAvatar} 
             alt="Profile" 
@@ -58,7 +57,7 @@ export default function ProfileSidebar({ user, isOpen, onClose, onThemeToggle })
           <li onClick={onThemeToggle}>Toggle Theme</li>
           <li>Settings (coming soon)</li>
           <li onClick={() => {
-              onClose(); // Close sidebar before logging out
+              onClose();
               signOut(auth);
             }}>Logout</li>
         </ul>
