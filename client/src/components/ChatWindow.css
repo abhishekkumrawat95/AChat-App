@@ -1,10 +1,20 @@
+.chat-window-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: var(--background-dark);
+}
+.theme-light .chat-window-container {
+  background-color: var(--background-light);
+}
+
 .chat-header {
   padding: 10px 20px;
   border-bottom: 1px solid var(--border-dark);
   background-color: var(--sidebar-dark);
   display: flex;
   align-items: center;
-  flex-shrink: 0; /* NEW: Prevents header from shrinking */
+  flex-shrink: 0;
 }
 .theme-light .chat-header {
   background-color: var(--sidebar-light);
@@ -31,6 +41,7 @@
 .theme-light .back-button {
   color: var(--text-light);
 }
+
 
 .chat-header-info {
   display: flex;
@@ -119,7 +130,7 @@
   display: flex;
   padding: 20px;
   background-color: var(--sidebar-dark);
-  flex-shrink: 0; /* NEW: Prevents input area from shrinking */
+  flex-shrink: 0;
 }
 .theme-light .input-container {
   background-color: var(--sidebar-light);

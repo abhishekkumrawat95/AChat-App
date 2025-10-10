@@ -73,7 +73,7 @@ export default function ChatWindow({ user, chatWith, socket, onBack }) {
   };
 
   return (
-    <>
+    <div className="chat-window-container">
       <header className="chat-header">
         <button className="back-button" onClick={onBack}>←</button>
         <img src={chatWith.photoURL || defaultAvatar} alt="Profile" className="header-avatar" />
@@ -102,6 +102,6 @@ export default function ChatWindow({ user, chatWith, socket, onBack }) {
         <input type="text" className="message-input" placeholder="Type a message..." value={message} onChange={(e) => setMessage(e.target.value)} onKeyPress={(e) => { if (e.key === "Enter") sendMessage(); }}/>
         <button onClick={sendMessage} className="send-button">Send</button>
       </div>
-    </>
+    </div>
   );
 }
