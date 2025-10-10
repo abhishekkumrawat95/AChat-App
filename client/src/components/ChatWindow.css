@@ -4,6 +4,7 @@
   background-color: var(--sidebar-dark);
   display: flex;
   align-items: center;
+  flex-shrink: 0; /* NEW: Prevents header from shrinking */
 }
 .theme-light .chat-header {
   background-color: var(--sidebar-light);
@@ -30,7 +31,6 @@
 .theme-light .back-button {
   color: var(--text-light);
 }
-
 
 .chat-header-info {
   display: flex;
@@ -114,14 +114,12 @@
 .status-ticks.seen {
   color: white;
 }
-.theme-light .status-ticks.seen {
-  color: white; /* Blue on white doesn't look great, keeping it white for contrast */
-}
 
 .input-container {
   display: flex;
   padding: 20px;
   background-color: var(--sidebar-dark);
+  flex-shrink: 0; /* NEW: Prevents input area from shrinking */
 }
 .theme-light .input-container {
   background-color: var(--sidebar-light);
