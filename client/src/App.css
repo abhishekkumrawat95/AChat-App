@@ -1,3 +1,5 @@
+/* client/src/App.css */
+
 /* Add theme variables */
 :root {
   --background-dark: #0e1621;
@@ -35,7 +37,7 @@ body {
   display: flex;
   height: 100dvh;
   width: 100vw;
-  overflow-x: hidden;
+  overflow: hidden; /* Changed to hidden to prevent scrollbars during scale */
   position: relative;
 }
 
@@ -65,6 +67,7 @@ body {
   font-size: 1.5rem;
 }
 
+/* === NEW ZOOM & FADE TRANSITION LOGIC === */
 @media (max-width: 768px) {
   .app-container {
     flex-direction: column;
@@ -74,18 +77,39 @@ body {
     height: 100%;
     position: absolute;
     top: 0;
-    /* CHANGED DURATION FROM 0.3s to 0.2s */
-    transition: transform 0.1s ease-in-out;
-    will-change: transform;
-    transform: translateZ(0);
+    left: 0;
+    
+    /* The transition now targets transform and opacity */
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+    will-change: transform, opacity;
   }
+
+  /* CHAT WINDOW (Starts small and invisible) */
   .chat-area {
-    transform: translateX(100%);
+    transform: scale(1.05);
+    opacity: 0;
+    pointer-events: none; /* Make it unclickable when hidden */
   }
-  .app-container.mobile-chat-active .sidebar {
-    transform: translateX(-100%);
+  
+  /* SIDEBAR (Starts normal) */
+  .sidebar {
+    transform: scale(1);
+    opacity: 1;
   }
+
+  /* === ACTIVE STATE (WHEN A CHAT IS OPEN) === */
+
+  /* Make the chat window scale in and become visible */
   .app-container.mobile-chat-active .chat-area {
-    transform: translateX(0);
+    transform: scale(1);
+    opacity: 1;
+    pointer-events: auto; /* Make it clickable again */
+  }
+
+  /* Make the sidebar scale down and fade out */
+  .app-container.mobile-chat-active .sidebar {
+    transform: scale(0.95);
+    opacity: 0;
+    pointer-events: none;
   }
 }

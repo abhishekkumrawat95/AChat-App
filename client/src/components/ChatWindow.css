@@ -1,7 +1,9 @@
+/* client/src/components/ChatWindow.css */
+
 .chat-window-container {
   display: flex;
   flex-direction: column;
-  height: 100dvh;
+  height: 100%;
   background-color: var(--background-dark);
 }
 .theme-light .chat-window-container {
