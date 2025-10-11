@@ -10,7 +10,7 @@ import { doc, collection, query, where, getDocs, orderBy, onSnapshot } from "fir
 import io from "socket.io-client";
 import './App.css';
 
-const socket = io.connect("https://achat-server.onrender.com"); // Aapka Render server URL
+const socket = io.connect("https://achat-server.onrender.com"); // Your Render server URL
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -77,6 +77,30 @@ export default function App() {
     }
   }, [user]);
 
+  // NEW HOOK: Handles mobile back button press
+  useEffect(() => {
+    const handleBackButton = () => {
+      // Go back to the home screen by closing the chat window
+      setChatWith(null);
+    };
+
+    // This logic runs whenever the 'chatWith' state changes
+    if (chatWith) {
+      // 1. When a chat is opened, push a new state to the browser's history.
+      // This makes the browser think we've navigated to a new "page".
+      window.history.pushState({ onChatScreen: true }, "");
+
+      // 2. Listen for the 'popstate' event (the user pressing the back button).
+      window.addEventListener('popstate', handleBackButton);
+    }
+
+    // 3. Cleanup function: remove the event listener when the component unmounts
+    // or when 'chatWith' changes again, to prevent memory leaks.
+    return () => {
+      window.removeEventListener('popstate', handleBackButton);
+    };
+  }, [chatWith]); // This hook depends on the 'chatWith' state
+
   if (isLoading) {
     return (
       <div className="loading-container">
@@ -88,7 +112,7 @@ export default function App() {
   if (!user) {
     return showLogin ? (
       <div>
-        <Login 
+        <Login
           registrationSuccess={registrationSuccess}
           clearSuccessMessage={() => setRegistrationSuccess(false)}
         />
@@ -96,7 +120,7 @@ export default function App() {
       </div>
     ) : (
       <div>
-        <Register 
+        <Register
           onSuccess={() => {
             setShowLogin(true);
             setRegistrationSuccess(true);
@@ -109,7 +133,7 @@ export default function App() {
 
   return (
     <div className={`app-container ${chatWith ? 'mobile-chat-active' : ''} theme-${theme}`}>
-      <ProfileSidebar 
+      <ProfileSidebar
         user={user}
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
@@ -117,7 +141,7 @@ export default function App() {
       />
       <Sidebar
         user={user}
-        chatHistory={chatHistory} 
+        chatHistory={chatHistory}
         onlineUserEmails={onlineUserEmails}
         onSelectChat={setChatWith}
         socket={socket}
