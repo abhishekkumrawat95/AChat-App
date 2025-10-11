@@ -74,7 +74,10 @@ body {
     height: 100%;
     position: absolute;
     top: 0;
-    transition: transform 0.3s ease-in-out;
+    /* CHANGED DURATION FROM 0.3s to 0.2s */
+    transition: transform 0.1s ease-in-out;
+    will-change: transform;
+    transform: translateZ(0);
   }
   .chat-area {
     transform: translateX(100%);

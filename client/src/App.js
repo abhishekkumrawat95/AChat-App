@@ -22,9 +22,25 @@ export default function App() {
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [theme, setTheme] = useState('dark');
+  const [isChatRendered, setIsChatRendered] = useState(false);
 
   const toggleTheme = () => {
     setTheme(currentTheme => (currentTheme === 'dark' ? 'light' : 'dark'));
+  };
+
+  const handleSelectChat = (selectedUser) => {
+    if (!selectedUser) return;
+    setChatWith(selectedUser);
+
+    // CHANGED TIMEOUT FROM 300 to 200 to match CSS
+    setTimeout(() => {
+      setIsChatRendered(true);
+    }, 100);
+  };
+
+  const handleBack = () => {
+    setIsChatRendered(false);
+    setChatWith(null);
   };
 
   useEffect(() => {
@@ -77,29 +93,20 @@ export default function App() {
     }
   }, [user]);
 
-  // NEW HOOK: Handles mobile back button press
   useEffect(() => {
-    const handleBackButton = () => {
-      // Go back to the home screen by closing the chat window
-      setChatWith(null);
+    const handlePopState = () => {
+      handleBack();
     };
 
-    // This logic runs whenever the 'chatWith' state changes
     if (chatWith) {
-      // 1. When a chat is opened, push a new state to the browser's history.
-      // This makes the browser think we've navigated to a new "page".
       window.history.pushState({ onChatScreen: true }, "");
-
-      // 2. Listen for the 'popstate' event (the user pressing the back button).
-      window.addEventListener('popstate', handleBackButton);
+      window.addEventListener('popstate', handlePopState);
     }
 
-    // 3. Cleanup function: remove the event listener when the component unmounts
-    // or when 'chatWith' changes again, to prevent memory leaks.
     return () => {
-      window.removeEventListener('popstate', handleBackButton);
+      window.removeEventListener('popstate', handlePopState);
     };
-  }, [chatWith]); // This hook depends on the 'chatWith' state
+  }, [chatWith]);
 
   if (isLoading) {
     return (
@@ -143,17 +150,17 @@ export default function App() {
         user={user}
         chatHistory={chatHistory}
         onlineUserEmails={onlineUserEmails}
-        onSelectChat={setChatWith}
+        onSelectChat={handleSelectChat}
         socket={socket}
         onProfileOpen={() => setIsProfileOpen(true)}
       />
       <main className="chat-area">
-        {chatWith ? (
+        {chatWith && isChatRendered ? (
           <ChatWindow
             user={user}
             chatWith={chatWith}
             socket={socket}
-            onBack={() => setChatWith(null)}
+            onBack={handleBack}
           />
         ) : (
           <div className="welcome-screen"><h2>Select a conversation to begin</h2></div>
