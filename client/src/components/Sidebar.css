@@ -1,3 +1,5 @@
+/* client/src/components/Sidebar.css */
+
 .sidebar {
   width: 320px;
   flex-shrink: 0;
@@ -75,6 +77,7 @@
   padding: 12px 16px;
   cursor: pointer;
   border-bottom: 1px solid var(--border-dark);
+  position: relative; 
 }
 .theme-light .user-list-item {
   border-bottom: 1px solid var(--border-light);
@@ -93,8 +96,11 @@
   height: 10px;
   width: 10px;
   border-radius: 50%;
-  margin-right: 12px;
   flex-shrink: 0;
+  position: absolute;
+  bottom: 10px;
+  left: 45px;
+  border: 2px solid var(--sidebar-dark);
 }
 
 .user-info {
@@ -140,36 +146,17 @@
   color: var(--text-secondary-light);
 }
 
-/* Add this new .sidebar-avatar style to your Sidebar.css file */
+/* MODIFIED: Added a border (stroke) */
 .sidebar-avatar {
   width: 45px;
   height: 45px;
   border-radius: 50%;
   object-fit: cover;
   margin-right: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1); /* Stroke for dark theme */
 }
 
-/* Also, remove margin-right from the online indicator */
-.online-indicator, .offline-indicator {
-  height: 10px;
-  width: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  /* NEW: position it on top of the avatar */
-  position: absolute;
-  bottom: 10px;
-  left: 45px;
-  border: 2px solid var(--sidebar-dark);
+/* NEW: Stroke for light theme avatar */
+.theme-light .sidebar-avatar {
+  border: 1px solid var(--border-light);
 }
-
-/* Make sure your .user-list-item has position relative */
-.user-list-item {
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  cursor: pointer;
-  border-bottom: 1px solid var(--border-dark);
-  position: relative; /* Add this */
-}
-
-/* ... the rest of your CSS file remains the same ... */

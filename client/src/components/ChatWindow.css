@@ -10,8 +10,9 @@
   background-color: var(--background-light);
 }
 
+/* MODIFIED: Reduced padding to decrease header height on mobile */
 .chat-header {
-  padding: 10px 20px;
+  padding: 6px 16px;
   border-bottom: 1px solid var(--border-dark);
   background-color: var(--sidebar-dark);
   display: flex;
@@ -23,12 +24,19 @@
   border-bottom: 1px solid var(--border-light);
 }
 
+/* MODIFIED: Made avatar smaller and added a border (stroke) */
 .header-avatar {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   object-fit: cover;
   margin-right: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.1); /* Stroke for dark theme */
+}
+
+/* NEW: Stroke for light theme avatar */
+.theme-light .header-avatar {
+  border: 1px solid var(--border-light);
 }
 
 .back-button {
@@ -134,8 +142,10 @@
   background-color: var(--sidebar-dark);
   flex-shrink: 0;
 }
+/* NEW: Added a top border for light theme to separate from message list */
 .theme-light .input-container {
   background-color: var(--sidebar-light);
+  border-top: 1px solid var(--border-light);
 }
 
 .message-input {
