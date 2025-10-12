@@ -1,11 +1,12 @@
 .context-menu {
   position: absolute;
   z-index: 1000;
-  background-color: #26394d;
+  background-color: #262626; /* Darker to match theme */
   border-radius: 8px;
   padding: 5px 0;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   width: 200px;
+  border: 1px solid #363636;
 }
 
 .context-menu ul {
@@ -18,10 +19,11 @@
   padding: 10px 20px;
   cursor: pointer;
   color: #fff;
+  font-size: 0.9rem;
 }
 
 .context-menu li:hover {
-  background-color: #4a9dec;
+  background-color: #3a3a3a;
 }
 
 .context-menu li.disabled {
@@ -30,4 +32,12 @@
 }
 .context-menu li.disabled:hover {
   background-color: transparent;
+}
+
+/* NEW: Style for destructive actions */
+.context-menu li.destructive {
+  color: #ed4956;
+}
+.context-menu li.destructive:hover {
+  background-color: rgba(237, 73, 86, 0.1);
 }

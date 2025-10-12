@@ -1,0 +1,109 @@
+/* client/src/components/MessageBubble.css */
+
+.message-wrapper {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+    max-width: 70%; 
+}
+.message-wrapper.sent {
+    align-self: flex-end;
+}
+.message-wrapper.received {
+    align-self: flex-start;
+}
+
+.message-bubble {
+  padding: 8px 14px 25px 14px;
+  border-radius: 20px;
+  position: relative;
+  width: -moz-fit-content;
+  width: fit-content;
+}
+
+.message-wrapper.sent .message-bubble {
+  background-color: #3797f0;
+  color: white;
+  border-bottom-right-radius: 5px;
+  min-width: 70px;
+}
+
+.message-wrapper.received .message-bubble {
+  background-color: #262626;
+  color: white;
+  border-bottom-left-radius: 5px;
+  min-width: 40px;
+}
+
+.theme-light .message-wrapper.received .message-bubble {
+  background-color: #efefef;
+  color: #000;
+  border: 1px solid #ddd;
+}
+
+.message-text {
+  margin: 0;
+  font-size: 1em;
+  line-height: 1.4;
+  word-break: break-all; 
+}
+
+.message-meta {
+  position: absolute;
+  bottom: 5px;
+  right: 12px;
+  font-size: 0.7em;
+  color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.theme-light .message-wrapper.received .message-meta {
+    color: rgba(0, 0, 0, 0.4);
+}
+
+.status-ticks {
+  margin-left: 5px;
+  font-weight: bold;
+}
+.message-wrapper.sent .status-ticks {
+  color: rgba(255, 255, 255, 0.8);
+}
+.status-ticks.seen {
+  color: #ffffff;
+}
+
+/* === NEW STYLES FOR THE REPLY CONTEXT IN A BUBBLE === */
+.reply-content-bubble {
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 6px 12px;
+    border-radius: 15px;
+    margin-bottom: -10px; /* Overlap with the main bubble */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    max-width: 100%;
+}
+.theme-light .reply-content-bubble {
+    background-color: rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.reply-content-bubble p {
+    margin: 0;
+    font-size: 0.85em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.reply-user {
+    font-weight: 600;
+    color: #3797f0;
+}
+.theme-light .reply-user {
+    color: #00376b;
+}
+.reply-text {
+    color: var(--text-secondary-dark);
+}
+.theme-light .reply-text {
+    color: var(--text-secondary-light);
+}

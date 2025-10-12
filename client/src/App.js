@@ -10,7 +10,7 @@ import { doc, collection, query, where, getDocs, orderBy, onSnapshot } from "fir
 import io from "socket.io-client";
 import './App.css';
 
-const socket = io.connect("https://achat-server.onrender.com"); // Your Render server URL
+const socket = io.connect("https://achat-server.onrender.com");
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -31,11 +31,9 @@ export default function App() {
   const handleSelectChat = (selectedUser) => {
     if (!selectedUser) return;
     setChatWith(selectedUser);
-
-    // CHANGED TIMEOUT FROM 300 to 200 to match CSS
     setTimeout(() => {
       setIsChatRendered(true);
-    }, 100);
+    }, 300);
   };
 
   const handleBack = () => {
@@ -49,8 +47,7 @@ export default function App() {
         const userDocRef = doc(db, "users", currentUser.uid);
         onSnapshot(userDocRef, (doc) => {
           if (doc.exists()) {
-            const fullUserData = { ...currentUser, ...doc.data() };
-            setUser(fullUserData);
+            setUser({ ...currentUser, ...doc.data() });
           }
         });
         socket.emit("login", currentUser.email);
@@ -59,9 +56,7 @@ export default function App() {
       }
       setIsLoading(false);
     });
-
     socket.on("update_users", (emails) => setOnlineUserEmails(emails));
-
     return () => {
       unsubscribeAuth();
       socket.off("update_users");
@@ -97,42 +92,28 @@ export default function App() {
     const handlePopState = () => {
       handleBack();
     };
-
     if (chatWith) {
       window.history.pushState({ onChatScreen: true }, "");
       window.addEventListener('popstate', handlePopState);
     }
-
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
   }, [chatWith]);
 
   if (isLoading) {
-    return (
-      <div className="loading-container">
-        <div>Loading...</div>
-      </div>
-    );
+    return <div className="loading-container"><div>Loading...</div></div>;
   }
 
   if (!user) {
     return showLogin ? (
       <div>
-        <Login
-          registrationSuccess={registrationSuccess}
-          clearSuccessMessage={() => setRegistrationSuccess(false)}
-        />
+        <Login registrationSuccess={registrationSuccess} clearSuccessMessage={() => setRegistrationSuccess(false)} />
         <p style={{ textAlign: "center", marginTop: 10 }}>Don't have an account? <button onClick={() => setShowLogin(false)}>Register</button></p>
       </div>
     ) : (
       <div>
-        <Register
-          onSuccess={() => {
-            setShowLogin(true);
-            setRegistrationSuccess(true);
-          }}
-        />
+        <Register onSuccess={() => { setShowLogin(true); setRegistrationSuccess(true); }} />
         <p style={{ textAlign: "center", marginTop: 10 }}>Already have an account? <button onClick={() => setShowLogin(true)}>Login</button></p>
       </div>
     );
@@ -140,30 +121,20 @@ export default function App() {
 
   return (
     <div className={`app-container ${chatWith ? 'mobile-chat-active' : ''} theme-${theme}`}>
-      <ProfileSidebar
-        user={user}
-        isOpen={isProfileOpen}
-        onClose={() => setIsProfileOpen(false)}
-        onThemeToggle={toggleTheme}
-      />
-      <Sidebar
-        user={user}
-        chatHistory={chatHistory}
-        onlineUserEmails={onlineUserEmails}
-        onSelectChat={handleSelectChat}
-        socket={socket}
-        onProfileOpen={() => setIsProfileOpen(true)}
-      />
+      <ProfileSidebar user={user} isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} onThemeToggle={toggleTheme} />
+      <Sidebar user={user} chatHistory={chatHistory} onlineUserEmails={onlineUserEmails} onSelectChat={handleSelectChat} socket={socket} onProfileOpen={() => setIsProfileOpen(true)} />
       <main className="chat-area">
         {chatWith && isChatRendered ? (
-          <ChatWindow
-            user={user}
-            chatWith={chatWith}
-            socket={socket}
-            onBack={handleBack}
-          />
+          <ChatWindow user={user} chatWith={chatWith} socket={socket} onBack={handleBack} />
         ) : (
-          <div className="welcome-screen"><h2>Select a conversation to begin</h2></div>
+          // MODIFIED: Only show welcome screen if a chat is NOT selected.
+          // During transition, this area will be empty, showing a clean background.
+          !chatWith && (
+            <div className="welcome-screen">
+                <h2>AChat</h2>
+                <p>Select a conversation to begin chatting.</p>
+            </div>
+          )
         )}
       </main>
     </div>

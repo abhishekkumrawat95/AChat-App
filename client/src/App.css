@@ -1,13 +1,11 @@
-/* client/src/App.css */
-
-/* Add theme variables */
+/* === NEW INSTAGRAM THEME VARIABLES === */
 :root {
-  --background-dark: #0e1621;
-  --sidebar-dark: #17212b;
-  --border-dark: #0f1924;
-  --text-dark: #fff;
-  --text-secondary-dark: #6c7a8b;
-  --hover-dark: #242f3d;
+  --background-dark: #000000; /* Pure black background */
+  --sidebar-dark: #000000; /* Black sidebar */
+  --border-dark: #262626; /* Dark grey border/separator */
+  --text-dark: #ffffff;
+  --text-secondary-dark: #a8a8a8; /* Lighter grey for secondary text */
+  --hover-dark: #1a1a1a; /* Slightly lighter black for hover */
 
   --background-light: #f0f2f5;
   --sidebar-light: #ffffff;
@@ -37,7 +35,7 @@ body {
   display: flex;
   height: 100dvh;
   width: 100vw;
-  overflow: hidden; /* Changed to hidden to prevent scrollbars during scale */
+  overflow: hidden;
   position: relative;
 }
 
@@ -54,9 +52,17 @@ body {
   justify-content: center;
   align-items: center;
   height: 100%;
+  flex-direction: column; /* Centered content */
+  text-align: center;
 }
 .theme-dark .welcome-screen { color: var(--text-secondary-dark); }
 .theme-light .welcome-screen { color: var(--text-secondary-light); }
+.welcome-screen h2 {
+    margin-bottom: 4px;
+}
+.welcome-screen p {
+    margin-top: 4px;
+}
 
 .loading-container {
   display: flex;
@@ -67,7 +73,6 @@ body {
   font-size: 1.5rem;
 }
 
-/* === NEW ZOOM & FADE TRANSITION LOGIC === */
 @media (max-width: 768px) {
   .app-container {
     flex-direction: column;
@@ -78,35 +83,27 @@ body {
     position: absolute;
     top: 0;
     left: 0;
-    
-    /* The transition now targets transform and opacity */
     transition: transform 0.3s ease-out, opacity 0.3s ease-out;
     will-change: transform, opacity;
   }
 
-  /* CHAT WINDOW (Starts small and invisible) */
   .chat-area {
     transform: scale(1.05);
     opacity: 0;
-    pointer-events: none; /* Make it unclickable when hidden */
+    pointer-events: none;
   }
   
-  /* SIDEBAR (Starts normal) */
   .sidebar {
     transform: scale(1);
     opacity: 1;
   }
 
-  /* === ACTIVE STATE (WHEN A CHAT IS OPEN) === */
-
-  /* Make the chat window scale in and become visible */
   .app-container.mobile-chat-active .chat-area {
     transform: scale(1);
     opacity: 1;
-    pointer-events: auto; /* Make it clickable again */
+    pointer-events: auto;
   }
 
-  /* Make the sidebar scale down and fade out */
   .app-container.mobile-chat-active .sidebar {
     transform: scale(0.95);
     opacity: 0;

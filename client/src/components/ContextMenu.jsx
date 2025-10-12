@@ -1,7 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import './ContextMenu.css';
 
-const ContextMenu = ({ menu, onClearChat, onDeleteChat }) => {
+// MODIFIED: Component now accepts an 'options' array
+const ContextMenu = ({ menu, options = [] }) => {
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -25,8 +26,21 @@ const ContextMenu = ({ menu, onClearChat, onDeleteChat }) => {
       style={{ top: menu.y, left: menu.x }}
     >
       <ul>
-        <li onClick={onClearChat}>Clear Chat</li>
-        <li className="disabled">Delete Chat (coming soon)</li>
+        {/* Map over the options to create the menu items */}
+        {options.map((option, index) => (
+          <li
+            key={index}
+            className={`${option.className || ''} ${option.disabled ? 'disabled' : ''}`}
+            onClick={() => {
+              if (!option.disabled && option.onClick) {
+                option.onClick();
+              }
+              menu.onClose(); // Close menu after click
+            }}
+          >
+            {option.label}
+          </li>
+        ))}
       </ul>
     </div>
   );

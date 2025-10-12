@@ -10,9 +10,8 @@
   background-color: var(--background-light);
 }
 
-/* MODIFIED: Reduced padding to decrease header height on mobile */
 .chat-header {
-  padding: 6px 16px;
+  padding: 4px 12px;
   border-bottom: 1px solid var(--border-dark);
   background-color: var(--sidebar-dark);
   display: flex;
@@ -24,17 +23,15 @@
   border-bottom: 1px solid var(--border-light);
 }
 
-/* MODIFIED: Made avatar smaller and added a border (stroke) */
 .header-avatar {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   object-fit: cover;
-  margin-right: 15px;
-  border: 1px solid rgba(255, 255, 255, 0.1); /* Stroke for dark theme */
+  margin-right: 12px;
 }
 
-/* NEW: Stroke for light theme avatar */
+/* NEW: Adds the missing stroke in light mode */
 .theme-light .header-avatar {
   border: 1px solid var(--border-light);
 }
@@ -43,8 +40,9 @@
   background: none;
   border: none;
   color: var(--text-dark);
-  font-size: 1.5rem;
-  margin-right: 15px;
+  font-size: 1.8rem;
+  margin-right: 10px;
+  padding: 0 5px;
   cursor: pointer;
   display: none;
 }
@@ -52,97 +50,95 @@
   color: var(--text-light);
 }
 
-
 .chat-header-info {
   display: flex;
   flex-direction: column;
 }
-
-.chat-header span {
-  font-size: 0.9em;
+.chat-header-info h3 {
+    font-size: 1rem;
+    margin: 0;
+}
+.chat-header-info span {
+  font-size: 0.8em;
   color: var(--text-secondary-dark);
 }
-.theme-light .chat-header span {
+.theme-light .chat-header-info span {
   color: var(--text-secondary-light);
 }
 
 .message-container {
   flex-grow: 1;
   overflow-y: auto;
-  padding: 20px;
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
+  padding: 10px;
+  min-height: 0;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.message-container::-webkit-scrollbar {
+  display: none;
 }
 
-.message-bubble {
-  max-width: 70%;
-  padding: 8px 14px 25px 14px; 
-  border-radius: 20px;
-  margin-bottom: 10px;
-  word-wrap: break-word;
-  position: relative;
-}
-
-.message-bubble.sent {
-  background-color: #007AFF;
-  color: white;
-  align-self: flex-end;
-  min-width: 70px;
-  border-bottom-right-radius: 5px;
-}
-
-.message-bubble.received {
-  background-color: #262d31;
-  color: white;
-  align-self: flex-start;
-  min-width: 40px;
-  border-bottom-left-radius: 5px;
-}
-.theme-light .message-bubble.received {
-  background-color: #e4e6eb;
-  color: #050505;
-}
-
-.message-text {
-  margin: 0;
-  font-size: 1em;
-  line-height: 1.4;
-}
-
-.message-meta {
-  position: absolute;
-  bottom: 5px;
-  right: 12px;
-  font-size: 0.7em;
-  color: rgba(255, 255, 255, 0.7);
+/* === MODIFIED: INSTAGRAM-STYLE REPLY UI === */
+.reply-preview-container {
+  padding: 8px 15px;
+  background-color: var(--background-dark); /* Match background */
+  border-top: 1px solid var(--border-dark); /* Use top border */
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 4px;
 }
-.theme-light .message-bubble.sent .message-meta {
-  color: rgba(255, 255, 255, 0.8);
+.theme-light .reply-preview-container {
+  background-color: var(--hover-light);
+  border-top: 1px solid var(--border-light);
+  border-bottom: none;
 }
-.theme-light .message-bubble.received .message-meta {
-  color: rgba(0, 0, 0, 0.6);
-}
-
-.status-ticks {
-  margin-left: 5px;
-  font-weight: bold;
-  color: rgba(255, 255, 255, 0.7);
+.reply-preview-content {
+  border-left: 2px solid #3797f0; /* Instagram's blue accent */
+  padding-left: 10px;
+  font-size: 0.9em;
 }
 
-.status-ticks.seen {
-  color: white;
+/* Text is now secondary color */
+.reply-preview-user {
+  color: var(--text-secondary-dark);
+  font-size: 0.9em;
+}
+/* The actual name is blue for emphasis */
+.reply-to-name {
+    font-weight: 600;
+    color: #3797f0;
+}
+.reply-preview-text {
+  color: var(--text-secondary-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 250px;
+}
+.theme-light .reply-preview-text, .theme-light .reply-preview-user {
+  color: var(--text-secondary-light);
+}
+
+.close-reply-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary-dark);
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+.theme-light .close-reply-btn {
+    color: var(--text-secondary-light);
 }
 
 .input-container {
   display: flex;
-  padding: 20px;
+  padding: 10px;
   background-color: var(--sidebar-dark);
   flex-shrink: 0;
 }
-/* NEW: Added a top border for light theme to separate from message list */
 .theme-light .input-container {
   background-color: var(--sidebar-light);
   border-top: 1px solid var(--border-light);
@@ -151,14 +147,14 @@
 .message-input {
   flex-grow: 1;
   padding: 10px 15px;
-  border: none;
+  border: 1px solid var(--border-dark);
   border-radius: 20px;
-  background-color: var(--hover-dark);
+  background-color: var(--sidebar-dark);
   color: var(--text-dark);
   margin-right: 10px;
 }
 .theme-light .message-input {
-  background-color: var(--hover-light);
+  background-color: var(--sidebar-light);
   color: var(--text-light);
   border: 1px solid var(--border-light);
 }
