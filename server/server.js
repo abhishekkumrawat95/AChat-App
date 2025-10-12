@@ -10,7 +10,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3000", "https://akchatcc.vercel.app"], // Apna Vercel URL yahan daalein
+    origin: ["http://localhost:3000", "https://akchatcc.vercel.app"],
     methods: ["GET", "POST"],
   },
 });
@@ -34,8 +34,11 @@ io.on("connection", (socket) => {
     console.log(`${username} has logged in.`);
   });
 
+  // === MODIFIED: Use direct recipient info ===
   socket.on("send_message", (data) => {
-    const recipientUsername = data.room.split('_').find(u => u !== data.user);
+    // अब हम सीधे 'data.to' से प्राप्तकर्ता का नाम लेते हैं
+    const recipientUsername = data.to;
+    
     let recipientSocket = null;
     for (let [id, sock] of io.sockets.sockets) {
       if (sock.username === recipientUsername) {
@@ -43,9 +46,11 @@ io.on("connection", (socket) => {
         break;
       }
     }
+    
     if (recipientSocket) {
-      console.log(`Relaying notification from ${data.user} to ${recipientUsername}`);
-      recipientSocket.emit("new_message_notification", { from: data.user, name: data.name });
+      console.log(`Relaying notification from ${data.from} to ${recipientUsername}`);
+      // नोटिफिकेशन भेजने वाले (data.from) के बारे में है
+      recipientSocket.emit("new_message_notification", { from: data.from, name: data.name });
     } else {
       console.log(`FAILED: Could not find online user ${recipientUsername}.`);
     }

@@ -122,13 +122,19 @@ export default function App() {
   return (
     <div className={`app-container ${chatWith ? 'mobile-chat-active' : ''} theme-${theme}`}>
       <ProfileSidebar user={user} isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} onThemeToggle={toggleTheme} />
-      <Sidebar user={user} chatHistory={chatHistory} onlineUserEmails={onlineUserEmails} onSelectChat={handleSelectChat} socket={socket} onProfileOpen={() => setIsProfileOpen(true)} />
+      <Sidebar
+        user={user}
+        chatHistory={chatHistory}
+        onlineUserEmails={onlineUserEmails}
+        onSelectChat={handleSelectChat}
+        socket={socket}
+        onProfileOpen={() => setIsProfileOpen(true)}
+        chatWith={chatWith} // <-- यह लाइन जोड़ें
+      />
       <main className="chat-area">
         {chatWith && isChatRendered ? (
           <ChatWindow user={user} chatWith={chatWith} socket={socket} onBack={handleBack} />
         ) : (
-          // MODIFIED: Only show welcome screen if a chat is NOT selected.
-          // During transition, this area will be empty, showing a clean background.
           !chatWith && (
             <div className="welcome-screen">
                 <h2>AChat</h2>

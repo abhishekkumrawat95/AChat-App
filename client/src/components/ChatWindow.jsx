@@ -1,5 +1,3 @@
-/* client/src/components/ChatWindow.jsx */
-
 import React, { useEffect, useLayoutEffect, useState, useRef } from "react";
 import { db } from "../firebase";
 import { collection, query, onSnapshot, addDoc, serverTimestamp, orderBy, doc, writeBatch, setDoc, deleteDoc } from "firebase/firestore";
@@ -76,7 +74,12 @@ export default function ChatWindow({ user, chatWith, socket, onBack }) {
         lastMessageTimestamp: serverTimestamp()
       }, { merge: true });
 
-    socket.emit("send_message", { room: roomName, user: user.email, name: user.name });
+    // === MODIFIED: Send recipient's email directly ===
+    socket.emit("send_message", {
+      to: chatWith.email, // प्राप्तकर्ता का ईमेल सीधे भेजें
+      from: user.email,   // भेजने वाले का ईमेल
+      name: user.name,
+    });
     
     setMessage("");
     setReplyingTo(null);
@@ -136,7 +139,6 @@ export default function ChatWindow({ user, chatWith, socket, onBack }) {
       {replyingTo && (
         <div className="reply-preview-container">
           <div className="reply-preview-content">
-            {/* MODIFIED: Separated name for distinct styling */}
             <p className="reply-preview-user">
               Replying to <span className="reply-to-name">{replyingTo.name}</span>
             </p>

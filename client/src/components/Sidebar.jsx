@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { db } from "../firebase";
-import { collection, query, where, getDocs, writeBatch, doc } from "firebase/firestore"; // Cleaned up imports
+import { collection, query, where, getDocs, writeBatch, doc } from "firebase/firestore";
 import ContextMenu from "./ContextMenu";
-import UserListItem from "./UserListItem"; // Import the new component
+import UserListItem from "./UserListItem";
 import './Sidebar.css';
 
-export default function Sidebar({ user, chatHistory = [], onlineUserEmails, onSelectChat, socket, onProfileOpen }) {
+// 1. यहाँ chatWith को प्रॉप्स में जोड़ें
+export default function Sidebar({ user, chatHistory = [], onlineUserEmails, onSelectChat, socket, onProfileOpen, chatWith }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [unreadCounts, setUnreadCounts] = useState({});
@@ -37,26 +38,45 @@ export default function Sidebar({ user, chatHistory = [], onlineUserEmails, onSe
 
   const onLongPress = (e, u) => {
     e.preventDefault();
+    const options = [
+      { label: "Clear Chat", onClick: handleClearChat },
+      { label: "Delete Chat (coming soon)", disabled: true },
+    ];
     setMenu({
       visible: true,
       x: e.pageX,
       y: e.pageY,
       selectedUser: u,
       onClose: () => setMenu({ visible: false }),
+      options, // Use dynamic options
     });
   };
 
-  const onClick = (u) => {
-    handleSelectChat(u);
+  const handleSelectChat = (selectedUser) => {
+    onSelectChat(selectedUser);
+    setSearchTerm("");
+    setSearchResults([]);
+    setUnreadCounts((prev) => {
+      const newCounts = { ...prev };
+      delete newCounts[selectedUser.email];
+      return newCounts;
+    });
   };
-
+  
+  // 2. इस useEffect को बदलें
   useEffect(() => {
     const handleNotification = ({ from }) => {
+      // अगर चैट खुली हुई है और मैसेज भेजने वाला वही है, तो कुछ न करें
+      if (chatWith && chatWith.email === from) {
+        return;
+      }
       setUnreadCounts((prev) => ({...prev, [from]: (prev[from] || 0) + 1 }));
     };
+
     socket.on("new_message_notification", handleNotification);
+
     return () => socket.off("new_message_notification", handleNotification);
-  }, [socket]);
+  }, [socket, chatWith]); // 3. chatWith को डिपेन्डन्सी में जोड़ें
 
   const handleSearch = async (e) => {
     const term = e.target.value;
@@ -71,24 +91,13 @@ export default function Sidebar({ user, chatHistory = [], onlineUserEmails, onSe
     const users = querySnapshot.docs.map(doc => doc.data()).filter(u => u.email !== user.email);
     setSearchResults(users);
   };
-
-  const handleSelectChat = (selectedUser) => {
-    onSelectChat(selectedUser);
-    setSearchTerm("");
-    setSearchResults([]);
-    setUnreadCounts((prev) => {
-      const newCounts = { ...prev };
-      delete newCounts[selectedUser.email];
-      return newCounts;
-    });
-  };
   
   const isSearching = searchTerm.trim() !== "";
   const usersToDisplay = isSearching ? searchResults : chatHistory;
 
   return (
     <>
-      <ContextMenu menu={menu} onClearChat={handleClearChat} />
+      <ContextMenu menu={menu} options={menu.options} />
       <aside className="sidebar">
         <header className="sidebar-header">
           <button className="menu-button" onClick={onProfileOpen}>☰</button>
@@ -105,7 +114,7 @@ export default function Sidebar({ user, chatHistory = [], onlineUserEmails, onSe
                 u={u}
                 isOnline={onlineUserEmails.includes(u.email)}
                 unreadCount={unreadCounts[u.email] || 0}
-                onClick={() => onClick(u)}
+                onClick={() => handleSelectChat(u)}
                 onLongPress={(e) => onLongPress(e, u)}
                 isSearching={isSearching}
               />
