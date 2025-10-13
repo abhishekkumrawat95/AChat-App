@@ -4,9 +4,9 @@ import Register from "./components/Register";
 import Sidebar from "./components/Sidebar";
 import ChatWindow from "./components/ChatWindow";
 import ProfileSidebar from "./components/ProfileSidebar";
-import { auth, db } from "./firebase";
+import { auth, db, requestForToken } from "./firebase"; // requestForToken ko import karein
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, collection, query, where, getDocs, orderBy, onSnapshot } from "firebase/firestore";
+import { doc, collection, query, where, getDocs, orderBy, onSnapshot, updateDoc } from "firebase/firestore"; // updateDoc ko import karein
 import io from "socket.io-client";
 import './App.css';
 
@@ -62,6 +62,47 @@ export default function App() {
       socket.off("update_users");
     };
   }, []);
+
+  // Page visibility ko handle karne ke liye
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        if (socket.disconnected) {
+          socket.connect();
+          if (auth.currentUser) {
+            socket.emit("login", auth.currentUser.email);
+          }
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
+  // === NEW HOOK FOR PUSH NOTIFICATIONS ===
+  useEffect(() => {
+    const setupNotifications = async () => {
+      // 1. User se permission maangein
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted' && user) {
+        // 2. Agar permission mil gayi, to token lein
+        const fcmToken = await requestForToken();
+        if (fcmToken) {
+          // 3. Token ko user ke document mein Firestore mein save karein
+          const userDocRef = doc(db, "users", user.uid);
+          await updateDoc(userDocRef, {
+            fcmToken: fcmToken // Token ko save/update karein
+          });
+        }
+      }
+    };
+    // Sirf jab user login kare, tab yeh function chalaayein
+    if (user) {
+      setupNotifications();
+    }
+  }, [user]); // Yeh hook tab chalega jab user state change hogi
 
   useEffect(() => {
     if (user) {
@@ -129,7 +170,7 @@ export default function App() {
         onSelectChat={handleSelectChat}
         socket={socket}
         onProfileOpen={() => setIsProfileOpen(true)}
-        chatWith={chatWith} // <-- यह लाइन जोड़ें
+        chatWith={chatWith}
       />
       <main className="chat-area">
         {chatWith && isChatRendered ? (
@@ -146,3 +187,4 @@ export default function App() {
     </div>
   );
 }
+
