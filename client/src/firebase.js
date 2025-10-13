@@ -4,7 +4,7 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getMessaging, getToken } from "firebase/messaging";
 
-// Your Firebase config object
+// Aapka Firebase config object
 const firebaseConfig = {
     apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
     authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
@@ -17,17 +17,16 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-// Create and export all Firebase services
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
-export const messaging = getMessaging(app); // This line was moved up
+export const messaging = getMessaging(app);
 
-// This function can now correctly find and use 'messaging'
+// Is function ko update karein
 export const requestForToken = async () => {
   try {
-    // Replace this with your actual VAPID key from Firebase Console
-    const vapidKey = 'BJIPI_cKdh2691SDDhK4csH7pwMuDqEkJGWVrMclEq6ltDB_8_34vQgnSNlm6Gg7wdhF-SBagFbaQod4C9qYlSs';
+    // === AAPKI VAPID KEY YAHAN PASTE KAR DI GAYI HAI ===
+    const vapidKey = 'BJ0eukhNfP3_i3kjcn1imNTkbI9gTnedNZF_Ur5q2eAJeTRe1w_Oy-dY6i9mWOlRukgiTAe0OcgAoohwppajnZs';
     const currentToken = await getToken(messaging, { vapidKey: vapidKey });
     
     if (currentToken) {
