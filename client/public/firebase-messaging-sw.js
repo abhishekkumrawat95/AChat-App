@@ -4,17 +4,19 @@
 importScripts("https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js");
 
-// Aapka Firebase config object (firebase.js se copy karein)
+// === YAHAN APNI ASLI KEYS DAALEIN ===
+// Yeh values aap apni .env.local file se copy kar sakte hain
 const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.REACT_APP_FIREBASE_APP_ID,
-  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
+    apiKey: "AIzaSyAM6oTK6tmdKEINW_mTj8V-zH-q8HG6q6A",
+    authDomain: "achat-app-6e714.firebaseapp.com",
+    projectId: "achat-app-6e714",
+    storageBucket: "achat-app-6e714.firebasestorage.app",
+    messagingSenderId: "1078644008003",
+    appId: "1:1078644008003:web:6c2b9b960960715054a0f6",
+    measurementId: "G-R479F3BJ0P"
 };
 
+// Firebase ko initialize karein
 firebase.initializeApp(firebaseConfig);
 
 const messaging = firebase.messaging();
