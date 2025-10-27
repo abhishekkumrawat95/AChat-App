@@ -1,41 +1,74 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef } from 'react';
 
+// A simpler and more robust implementation
 export default function useLongPress(onLongPress, onClick, { delay = 500 } = {}) {
-    const [longPressTriggered, setLongPressTriggered] = useState(false);
     const timeout = useRef();
+    const startPos = useRef({ x: 0, y: 0 });
+    const isLongPress = useRef(false);
+    const isScrolling = useRef(false);
 
     const start = useCallback((event) => {
-        // We use a timeout to detect a long press.
+        // Get initial touch/mouse position
+        const point = event.touches ? event.touches[0] : event;
+        startPos.current = { x: point.clientX, y: point.clientY };
+
+        // Reset flags for the new interaction
+        isLongPress.current = false;
+        isScrolling.current = false;
+
+        // Start the timer for the long press
         timeout.current = setTimeout(() => {
-            onLongPress(event);
-            setLongPressTriggered(true); // Set a flag to indicate a long press happened.
+            // If the finger hasn't moved (is not scrolling), trigger the long press
+            if (!isScrolling.current) {
+                isLongPress.current = true;
+                onLongPress(event);
+            }
         }, delay);
     }, [onLongPress, delay]);
 
-    const clear = useCallback((event) => {
-        // If the mouse is released, clear the timeout.
-        timeout.current && clearTimeout(timeout.current);
+    const move = useCallback((event) => {
+        // If there's no start position recorded, do nothing
+        if (!startPos.current.x && !startPos.current.y) {
+            return;
+        }
 
-        // IMPORTANT: Only trigger the regular onClick if a long press has NOT been triggered.
-        if (longPressTriggered === false) {
+        const point = event.touches ? event.touches[0] : event;
+        const deltaX = Math.abs(point.clientX - startPos.current.x);
+        const deltaY = Math.abs(point.clientY - startPos.current.y);
+        const threshold = 10; // A 10-pixel movement threshold
+
+        // If the finger has moved more than the threshold, it's a scroll
+        if (deltaX > threshold || deltaY > threshold) {
+            isScrolling.current = true;
+            // Immediately cancel the long press timer if it's running
+            if (timeout.current) {
+                clearTimeout(timeout.current);
+            }
+        }
+    }, []);
+
+    const end = useCallback((event) => {
+        // Always clear the timer when the press ends
+        if (timeout.current) {
+            clearTimeout(timeout.current);
+        }
+
+        // IMPORTANT: Trigger the onClick function ONLY if it was NOT a long press AND it was NOT a scroll
+        if (!isLongPress.current && !isScrolling.current) {
             onClick(event);
         }
 
-        // Reset the flag for the next press.
-        setLongPressTriggered(false);
-    }, [onClick, longPressTriggered]);
-    
-    // If the mouse leaves the element, we should cancel the long press.
-    const cancel = () => {
-        timeout.current && clearTimeout(timeout.current);
-        setLongPressTriggered(false);
-    };
+        // Reset start position for the next interaction
+        startPos.current = { x: 0, y: 0 };
+    }, [onClick]);
 
     return {
-        onMouseDown: (e) => start(e),
-        onTouchStart: (e) => start(e),
-        onMouseUp: (e) => clear(e),
-        onTouchEnd: (e) => clear(e),
-        onMouseLeave: cancel,
+        onMouseDown: start,
+        onTouchStart: start,
+        onMouseMove: move,
+        onTouchMove: move,
+        onMouseUp: end,
+        onTouchEnd: end,
+        onMouseLeave: end, // Also treat leaving the element as an 'end' event to prevent sticky states
     };
 }
