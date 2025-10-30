@@ -33,6 +33,9 @@ export default function ChatWindow({ user, chatWith, socket, onBack }) {
         });
         batch.commit();
       }
+    }, (error) => {
+      // Snapshot listener error (jo aap dekh rahe hain)
+      console.error("Error in Message listener:", error);
     });
 
     return () => unsubscribe();
@@ -44,9 +47,13 @@ export default function ChatWindow({ user, chatWith, socket, onBack }) {
     }
   }, [messages]);
 
+  // === YEH FUNCTION BADLA GAYA HAI ===
   const sendMessage = async () => {
     if (!message.trim() || !chatWith) return;
     const roomName = [user.email, chatWith.email].sort().join("_");
+
+    // References ko pehle se bana lein
+    const chatDocRef = doc(db, "chats", roomName);
     const messagesRef = collection(db, "chats", roomName, "messages");
 
     const messageData = {
@@ -65,25 +72,36 @@ export default function ChatWindow({ user, chatWith, socket, onBack }) {
       };
     }
 
-    await addDoc(messagesRef, messageData);
-    
-    const chatDocRef = doc(db, "chats", roomName);
-    await setDoc(chatDocRef, {
-        participants: [user.email, chatWith.email],
-        lastMessage: message,
-        lastMessageTimestamp: serverTimestamp()
-      }, { merge: true });
+    try {
+      // === STEP 1: Pehle Chat Document ko Banayein/Update Karein ===
+      // { merge: true } ka matlab hai ki agar document pehle se hai, to use update karo,
+      // agar nahi hai, to naya bana do.
+      await setDoc(chatDocRef, {
+          participants: [user.email, chatWith.email],
+          lastMessage: message,
+          lastMessageTimestamp: serverTimestamp()
+        }, { merge: true });
 
-    // === MODIFIED: Send recipient's email directly ===
-    socket.emit("send_message", {
-      to: chatWith.email, // प्राप्तकर्ता का ईमेल सीधे भेजें
-      from: user.email,   // भेजने वाले का ईमेल
-      name: user.name,
-    });
-    
-    setMessage("");
-    setReplyingTo(null);
+      // === STEP 2: Ab Message ko Add Karein ===
+      // Kyunki Step 1 poora ho chuka hai, ab security rules pass ho jaayenge
+      await addDoc(messagesRef, messageData);
+
+      // Baaki sab waisa hi
+      socket.emit("send_message", {
+        to: chatWith.email,
+        from: user.email,
+        name: user.name,
+      });
+      
+      setMessage("");
+      setReplyingTo(null);
+
+    } catch (error) {
+      // Error ko console mein dikhayein
+      console.error("Message bhejne mein error aaya:", error);
+    }
   };
+  // === FUNCTION YAHAN KHATAM HOTA HAI ===
 
   const handleReply = (msg) => {
     setReplyingTo(msg);
@@ -149,7 +167,7 @@ export default function ChatWindow({ user, chatWith, socket, onBack }) {
       )}
 
       <div className="input-container">
-        <input type="text" className="message-input" placeholder="Message..." value={message} onChange={(e) => setMessage(e.target.value)} onKeyPress={(e) => { if (e.key === "Enter") sendMessage(); }}/>
+        <input type="text" className="message-input" placeholder="Message..." value={message} onChange={(e) => setMessage(e.g.target.value)} onKeyPress={(e) => { if (e.key === "Enter") sendMessage(); }}/>
         <button onClick={sendMessage} className="send-button">Send</button>
       </div>
     </div>
