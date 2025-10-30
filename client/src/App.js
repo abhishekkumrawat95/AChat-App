@@ -48,7 +48,13 @@ export default function App() {
         onSnapshot(userDocRef, (doc) => {
           if (doc.exists()) {
             setUser({ ...currentUser, ...doc.data() });
+          } else {
+            // Handle case where auth user exists but Firestore doc might not yet (rare)
+             console.log("User authenticated but Firestore document not found yet.");
+             // Optionally set a minimal user object or wait
           }
+        }, (error) => {
+             console.error("Error listening to user document:", error); // Log errors
         });
         socket.emit("login", currentUser.email);
       } else {
@@ -84,50 +90,113 @@ export default function App() {
   // === NEW HOOK FOR PUSH NOTIFICATIONS ===
   useEffect(() => {
     const setupNotifications = async () => {
-      // 1. User se permission maangein
-      const permission = await Notification.requestPermission();
-      if (permission === 'granted' && user) {
-        // 2. Agar permission mil gayi, to token lein
-        const fcmToken = await requestForToken();
-        if (fcmToken) {
-          // 3. Token ko user ke document mein Firestore mein save karein
-          const userDocRef = doc(db, "users", user.uid);
-          await updateDoc(userDocRef, {
-            fcmToken: fcmToken // Token ko save/update karein
-          });
+       console.log("setupNotifications function ke andar.");
+      try {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted' && user) {
+          console.log("Notification permission mil gayi.");
+          const fcmToken = await requestForToken();
+           console.log("Token mila:", fcmToken);
+          if (fcmToken) {
+            console.log("Token ko Firestore mein save karne ki koshish...");
+            const userDocRef = doc(db, "users", user.uid);
+            await updateDoc(userDocRef, {
+              fcmToken: fcmToken
+            });
+            console.log("SUCCESS: Token Firestore mein save ho gaya!");
+          }
         }
+      } catch (error) {
+        console.error("ERROR: Token save karte waqt error aaya:", error);
       }
     };
-    // Sirf jab user login kare, tab yeh function chalaayein
     if (user) {
       setupNotifications();
     }
-  }, [user]); // Yeh hook tab chalega jab user state change hogi
-
-  useEffect(() => {
-    if (user) {
-      const chatsRef = collection(db, "chats");
-      const q = query(chatsRef, where("participants", "array-contains", user.email), orderBy("lastMessageTimestamp", "desc"));
-      const unsubscribe = onSnapshot(q, async (querySnapshot) => {
-        const chats = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        const otherUserEmails = chats.map(chat => chat.participants.find(email => email !== user.email)).filter(Boolean);
-        if (otherUserEmails.length > 0) {
-          const usersRef = collection(db, "users");
-          const usersQuery = query(usersRef, where("email", "in", otherUserEmails));
-          const usersSnapshot = await getDocs(usersQuery);
-          const usersData = usersSnapshot.docs.map(doc => doc.data());
-          const historyWithLastMessage = usersData.map(userData => {
-            const relevantChat = chats.find(chat => chat.participants.includes(userData.email));
-            return { ...userData, lastMessage: relevantChat ? relevantChat.lastMessage : '' };
-          });
-          setChatHistory(historyWithLastMessage);
-        } else {
-          setChatHistory([]);
-        }
-      });
-      return () => unsubscribe();
-    }
   }, [user]);
+
+  // === UPDATED CHAT HISTORY USEEFFECT WITH LOGGING ===
+  useEffect(() => {
+    // Ensure user and user.email are available before proceeding
+    if (user && user.email) {
+      console.log("Setting up chat history listener for user:", user.email);
+      const chatsRef = collection(db, "chats");
+      // Query chats where the current user is a participant, order by the last message time
+      const q = query(chatsRef, where("participants", "array-contains", user.email), orderBy("lastMessageTimestamp", "desc"));
+
+      const unsubscribe = onSnapshot(q, async (querySnapshot) => {
+        console.log("Chat listener triggered. Found", querySnapshot.docs.length, "chats."); // Log: How many chats found?
+
+        // Map chat document data
+        const chats = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        console.log("Chat documents data:", chats); // Log: Raw chat data
+
+        // Extract emails of the other participants
+        const otherUserEmails = chats
+          .map(chat => chat.participants?.find(email => email !== user.email)) // Use optional chaining just in case
+          .filter(Boolean); // Remove any undefined entries
+        console.log("Other participant emails:", otherUserEmails); // Log: Emails found
+
+        if (otherUserEmails.length > 0) {
+          try {
+            const usersRef = collection(db, "users");
+            // Fetch user profiles for all other participants in one go
+            // Note: 'in' queries are limited to 10 elements. For more, you'd need multiple queries.
+            const usersQuery = query(usersRef, where("email", "in", otherUserEmails));
+            const usersSnapshot = await getDocs(usersQuery);
+            const usersData = usersSnapshot.docs.map(doc => doc.data());
+            console.log("Fetched user data for participants:", usersData); // Log: User profiles fetched
+
+             // Create a map for quick lookup of user data by email
+             const usersDataMap = usersData.reduce((acc, userData) => {
+                acc[userData.email] = userData;
+                return acc;
+            }, {});
+
+            // Combine chat data with user data, ensuring order is preserved from chat query
+            const historyWithLastMessage = chats.map(chat => {
+                const otherUserEmail = chat.participants?.find(email => email !== user.email);
+                const userData = otherUserEmail ? usersDataMap[otherUserEmail] : null;
+
+                if (!userData) {
+                     console.warn("Could not find user data for email:", otherUserEmail, "in chat:", chat.id);
+                     return null; // Skip this chat if user data is missing
+                }
+
+                return {
+                 ...userData, // Spread the found user data
+                 lastMessage: chat.lastMessage ?? '', // Get last message from chat doc
+                 lastMessageTimestamp: chat.lastMessageTimestamp // Keep timestamp for potential future sorting
+                };
+            }).filter(Boolean); // Filter out any null entries where user data was missing
+
+            console.log("Final chat history being set:", historyWithLastMessage); // Log: The final list
+
+            setChatHistory(historyWithLastMessage);
+          } catch (error) {
+             console.error("Error fetching user data for chat history:", error); // Log: Errors during user fetch
+             setChatHistory([]); // Set to empty on error
+          }
+        } else {
+          console.log("No other participants found, setting chat history to empty."); // Log: Empty case
+          setChatHistory([]); // No chats involving other users
+        }
+      }, (error) => {
+        // Handle listener errors (like permission denied after deletion)
+        console.error("Error in chat snapshot listener:", error);
+      });
+
+      // Cleanup function to detach the listener
+      return () => {
+        console.log("Detaching chat history listener.");
+        unsubscribe();
+      };
+    } else {
+       console.log("User not available, clearing chat history.");
+       setChatHistory([]); // Clear history if user logs out
+    }
+  }, [user]); // Re-run this effect if the user object changes
+
 
   useEffect(() => {
     const handlePopState = () => {
@@ -187,4 +256,3 @@ export default function App() {
     </div>
   );
 }
-
