@@ -1,0 +1,148 @@
+/* Login Page Specific Styling */
+
+.auth-page {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    width: 100vw;
+    background-color: var(--background-dark);
+    color: var(--text-dark);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.auth-card {
+    background-color: var(--sidebar-dark);
+    border: 1px solid var(--border-dark);
+    padding: 40px 20px;
+    width: 100%;
+    max-width: 350px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-radius: 1px; /* Instagram uses very slight rounding */
+}
+
+.auth-logo {
+    font-family: 'Cookie', cursive, sans-serif; /* You can import a cursive font or use a standard one */
+    font-size: 3.5rem;
+    margin-bottom: 30px;
+    font-weight: 500;
+}
+
+.auth-form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 12px 10px;
+    background-color: #121212;
+    border: 1px solid var(--border-dark);
+    border-radius: 3px;
+    color: white;
+    font-size: 0.85rem;
+    box-sizing: border-box;
+}
+
+.input-group input:focus {
+    border-color: #a8a8a8;
+    outline: none;
+}
+
+.auth-btn {
+    background-color: #0095f6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background-color 0.2s;
+}
+
+.auth-btn:hover {
+    background-color: #1877f2;
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin: 20px 0;
+}
+
+.auth-divider::before, .auth-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background-color: var(--border-dark);
+}
+
+.auth-divider span {
+    padding: 0 15px;
+    color: var(--text-secondary-dark);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.auth-footer {
+    margin-top: 20px;
+    font-size: 0.9rem;
+}
+
+.switch-btn {
+    background: none;
+    border: none;
+    color: #0095f6;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    font-size: 0.9rem;
+}
+
+.error-banner {
+    color: #ed4956;
+    font-size: 0.85rem;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.success-banner {
+    background-color: rgba(0, 149, 246, 0.1);
+    color: #0095f6;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    text-align: center;
+    margin-bottom: 15px;
+    width: 100%;
+    cursor: pointer;
+}
+
+.auth-bottom-info {
+    margin-top: 40px;
+    text-align: center;
+    color: var(--text-secondary-dark);
+    font-size: 0.8rem;
+}
+
+.company-name {
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--text-dark);
+    margin-top: 5px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 450px) {
+    .auth-card {
+        border: none;
+        background-color: transparent;
+    }
+}

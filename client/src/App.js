@@ -4,9 +4,9 @@ import Register from "./components/Register";
 import Sidebar from "./components/Sidebar";
 import ChatWindow from "./components/ChatWindow";
 import ProfileSidebar from "./components/ProfileSidebar";
-import { auth, db, requestForToken } from "./firebase"; // requestForToken ko import karein
+import { auth, db, requestForToken } from "./firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, collection, query, where, getDocs, orderBy, onSnapshot, updateDoc } from "firebase/firestore"; // updateDoc ko import karein
+import { doc, collection, query, where, getDocs, orderBy, onSnapshot, updateDoc } from "firebase/firestore";
 import io from "socket.io-client";
 import './App.css';
 
@@ -49,12 +49,10 @@ export default function App() {
           if (doc.exists()) {
             setUser({ ...currentUser, ...doc.data() });
           } else {
-            // Handle case where auth user exists but Firestore doc might not yet (rare)
-             console.log("User authenticated but Firestore document not found yet.");
-             // Optionally set a minimal user object or wait
+            console.log("User authenticated but Firestore document not found yet.");
           }
         }, (error) => {
-             console.error("Error listening to user document:", error); // Log errors
+          console.error("Error listening to user document:", error);
         });
         socket.emit("login", currentUser.email);
       } else {
@@ -69,7 +67,6 @@ export default function App() {
     };
   }, []);
 
-  // Page visibility ko handle karne ke liye
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
@@ -87,22 +84,19 @@ export default function App() {
     };
   }, []);
 
-  // === NEW HOOK FOR PUSH NOTIFICATIONS ===
   useEffect(() => {
     const setupNotifications = async () => {
-       console.log("setupNotifications function ke andar.");
+      console.log("setupNotifications function ke andar.");
       try {
         const permission = await Notification.requestPermission();
         if (permission === 'granted' && user) {
           console.log("Notification permission mil gayi.");
           const fcmToken = await requestForToken();
-           console.log("Token mila:", fcmToken);
+          console.log("Token mila:", fcmToken);
           if (fcmToken) {
             console.log("Token ko Firestore mein save karne ki koshish...");
             const userDocRef = doc(db, "users", user.uid);
-            await updateDoc(userDocRef, {
-              fcmToken: fcmToken
-            });
+            await updateDoc(userDocRef, { fcmToken: fcmToken });
             console.log("SUCCESS: Token Firestore mein save ho gaya!");
           }
         }
@@ -115,88 +109,71 @@ export default function App() {
     }
   }, [user]);
 
-  // === UPDATED CHAT HISTORY USEEFFECT WITH LOGGING ===
   useEffect(() => {
-    // Ensure user and user.email are available before proceeding
     if (user && user.email) {
       console.log("Setting up chat history listener for user:", user.email);
       const chatsRef = collection(db, "chats");
-      // Query chats where the current user is a participant, order by the last message time
       const q = query(chatsRef, where("participants", "array-contains", user.email), orderBy("lastMessageTimestamp", "desc"));
 
       const unsubscribe = onSnapshot(q, async (querySnapshot) => {
-        console.log("Chat listener triggered. Found", querySnapshot.docs.length, "chats."); // Log: How many chats found?
-
-        // Map chat document data
+        console.log("Chat listener triggered. Found", querySnapshot.docs.length, "chats.");
         const chats = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        console.log("Chat documents data:", chats); // Log: Raw chat data
-
-        // Extract emails of the other participants
         const otherUserEmails = chats
-          .map(chat => chat.participants?.find(email => email !== user.email)) // Use optional chaining just in case
-          .filter(Boolean); // Remove any undefined entries
-        console.log("Other participant emails:", otherUserEmails); // Log: Emails found
+          .map(chat => chat.participants?.find(email => email !== user.email))
+          .filter(Boolean);
+
+        console.log("Other participant emails:", otherUserEmails);
 
         if (otherUserEmails.length > 0) {
           try {
             const usersRef = collection(db, "users");
-            // Fetch user profiles for all other participants in one go
-            // Note: 'in' queries are limited to 10 elements. For more, you'd need multiple queries.
             const usersQuery = query(usersRef, where("email", "in", otherUserEmails));
             const usersSnapshot = await getDocs(usersQuery);
             const usersData = usersSnapshot.docs.map(doc => doc.data());
-            console.log("Fetched user data for participants:", usersData); // Log: User profiles fetched
-
-             // Create a map for quick lookup of user data by email
-             const usersDataMap = usersData.reduce((acc, userData) => {
-                acc[userData.email] = userData;
-                return acc;
+            
+            const usersDataMap = usersData.reduce((acc, userData) => {
+              acc[userData.email] = userData;
+              return acc;
             }, {});
 
-            // Combine chat data with user data, ensuring order is preserved from chat query
             const historyWithLastMessage = chats.map(chat => {
-                const otherUserEmail = chat.participants?.find(email => email !== user.email);
-                const userData = otherUserEmail ? usersDataMap[otherUserEmail] : null;
+              const otherUserEmail = chat.participants?.find(email => email !== user.email);
+              const userData = otherUserEmail ? usersDataMap[otherUserEmail] : null;
 
-                if (!userData) {
-                     console.warn("Could not find user data for email:", otherUserEmail, "in chat:", chat.id);
-                     return null; // Skip this chat if user data is missing
-                }
+              if (!userData) {
+                console.warn("Could not find user data for email:", otherUserEmail, "in chat:", chat.id);
+                return null;
+              }
 
-                return {
-                 ...userData, // Spread the found user data
-                 lastMessage: chat.lastMessage ?? '', // Get last message from chat doc
-                 lastMessageTimestamp: chat.lastMessageTimestamp // Keep timestamp for potential future sorting
-                };
-            }).filter(Boolean); // Filter out any null entries where user data was missing
+              return {
+                ...userData,
+                lastMessage: chat.lastMessage ?? '',
+                lastMessageTimestamp: chat.lastMessageTimestamp
+              };
+            }).filter(Boolean);
 
-            console.log("Final chat history being set:", historyWithLastMessage); // Log: The final list
-
+            console.log("Final chat history being set:", historyWithLastMessage);
             setChatHistory(historyWithLastMessage);
           } catch (error) {
-             console.error("Error fetching user data for chat history:", error); // Log: Errors during user fetch
-             setChatHistory([]); // Set to empty on error
+            console.error("Error fetching user data for chat history:", error);
+            setChatHistory([]);
           }
         } else {
-          console.log("No other participants found, setting chat history to empty."); // Log: Empty case
-          setChatHistory([]); // No chats involving other users
+          console.log("No other participants found, setting chat history to empty.");
+          setChatHistory([]);
         }
       }, (error) => {
-        // Handle listener errors (like permission denied after deletion)
         console.error("Error in chat snapshot listener:", error);
       });
 
-      // Cleanup function to detach the listener
       return () => {
         console.log("Detaching chat history listener.");
         unsubscribe();
       };
     } else {
-       console.log("User not available, clearing chat history.");
-       setChatHistory([]); // Clear history if user logs out
+      setChatHistory([]);
     }
-  }, [user]); // Re-run this effect if the user object changes
-
+  }, [user]);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -217,15 +194,16 @@ export default function App() {
 
   if (!user) {
     return showLogin ? (
-      <div>
-        <Login registrationSuccess={registrationSuccess} clearSuccessMessage={() => setRegistrationSuccess(false)} />
-        <p style={{ textAlign: "center", marginTop: 10 }}>Don't have an account? <button onClick={() => setShowLogin(false)}>Register</button></p>
-      </div>
+      <Login 
+        registrationSuccess={registrationSuccess} 
+        clearSuccessMessage={() => setRegistrationSuccess(false)} 
+        onSwitch={() => setShowLogin(false)}
+      />
     ) : (
-      <div>
-        <Register onSuccess={() => { setShowLogin(true); setRegistrationSuccess(true); }} />
-        <p style={{ textAlign: "center", marginTop: 10 }}>Already have an account? <button onClick={() => setShowLogin(true)}>Login</button></p>
-      </div>
+      <Register 
+        onSuccess={() => { setShowLogin(true); setRegistrationSuccess(true); }} 
+        onSwitch={() => setShowLogin(true)}
+      />
     );
   }
 

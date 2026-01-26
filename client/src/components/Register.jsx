@@ -1,100 +1,122 @@
-import React, { useState } from "react";
-import { auth, db } from "../firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, getDoc, writeBatch } from "firebase/firestore";
+import React, { useState } from 'react';
+import { auth, db } from '../firebase';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import './Register.css';
 
-export default function Register({ onSuccess }) {
-  const [name, setName] = useState("");
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+export default function Register({ onSuccess, onSwitch }) {
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [username, setUsername] = useState("");
+    const [fullName, setFullName] = useState("");
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
 
-  // handleRegister function ko component ke andar rakha gaya hai
-  const handleRegister = async () => {
-    if (!name || !username || !email || !password) {
-      setError("Please fill in all fields.");
-      return;
-    }
-    setIsLoading(true);
-    setError("");
-    console.log("Attempting to register user:", email);
+    const handleRegister = async (e) => {
+        e.preventDefault();
+        setError("");
+        setLoading(true);
 
-    try {
-      console.log("Checking username uniqueness for:", username.toLowerCase());
-      const usernameDocRef = doc(db, "usernames", username.toLowerCase());
-      const usernameDoc = await getDoc(usernameDocRef);
-      if (usernameDoc.exists()) {
-        console.log("Username already exists.");
-        throw new Error("This username is already taken. Please choose another.");
-      }
-      console.log("Username is available.");
+        try {
+            // 1. Create user in Firebase Auth
+            const res = await createUserWithEmailAndPassword(auth, email, password);
+            
+            // 2. Update Auth Profile
+            await updateProfile(res.user, {
+                displayName: fullName
+            });
 
-      console.log("Creating user with email/password...");
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      console.log("Auth user created successfully. UID:", user.uid);
+            // 3. Save additional data to Firestore
+            await setDoc(doc(db, "users", res.user.uid), {
+                uid: res.user.uid,
+                email: email,
+                username: username.toLowerCase().replace(/\s/g, ''),
+                name: fullName,
+                photoURL: "",
+                createdAt: new Date().toISOString()
+            });
 
-      console.log("Preparing batch write for Firestore...");
-      const batch = writeBatch(db);
-      const userDocRef = doc(db, "users", user.uid);
+            // 4. Save username to a separate collection for uniqueness checks later if needed
+            await setDoc(doc(db, "usernames", username.toLowerCase()), {
+                uid: res.user.uid
+            });
 
-      batch.set(userDocRef, {
-        uid: user.uid,
-        name: name, // Ab yeh component ke state waala 'name' hai
-        username: username,
-        email: email,
-        photoURL: ""
-      });
-      console.log("Added user document write to batch.");
+            onSuccess();
+        } catch (err) {
+            if (err.code === 'auth/email-already-in-use') {
+                setError("Email is already registered.");
+            } else if (err.code === 'auth/weak-password') {
+                setError("Password should be at least 6 characters.");
+            } else {
+                setError("Registration failed. Please try again.");
+            }
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-      batch.set(usernameDocRef, { uid: user.uid });
-      console.log("Added username document write to batch.");
+    return (
+        <div className="auth-page">
+            <div className="auth-card">
+                <h1 className="auth-logo">AChat</h1>                
+                {error && <div className="error-banner">{error}</div>}
 
-      console.log("Attempting to commit batch write...");
-      await batch.commit();
-      console.log("Batch write committed successfully.");
+                <form className="auth-form" onSubmit={handleRegister}>
+                    <div className="input-group">
+                        <input 
+                            type="email" 
+                            placeholder="Email" 
+                            required 
+                            value={email}
+                            onChange={e => setEmail(e.target.value)} 
+                        />
+                    </div>
+                    <div className="input-group">
+                        <input 
+                            type="text" 
+                            placeholder="Full Name" 
+                            required 
+                            value={fullName}
+                            onChange={e => setFullName(e.target.value)} 
+                        />
+                    </div>
+                    <div className="input-group">
+                        <input 
+                            type="text" 
+                            placeholder="Username" 
+                            required 
+                            value={username}
+                            onChange={e => setUsername(e.target.value)} 
+                        />
+                    </div>
+                    <div className="input-group">
+                        <input 
+                            type="password" 
+                            placeholder="Password" 
+                            required 
+                            value={password}
+                            onChange={e => setPassword(e.target.value)} 
+                        />
+                    </div>
+                    <button type="submit" className="auth-btn" disabled={loading}>
+                        {loading ? "Signing up..." : "Sign Up"}
+                    </button>
+                </form>
 
-      console.log("Registration process completed successfully.");
-      if (onSuccess) {
-        onSuccess();
-      }
+                <p className="auth-terms">
+                    By signing up, you agree to our Terms, Data Policy and Cookies Policy.
+                </p>
+            </div>
 
-    } catch (err) {
-      console.error("!!! Registration Error Caught !!!");
-      console.error("Error Object:", err);
-      console.error("Error Code:", err.code);
-      console.error("Error Name:", err.name);
-      console.error("Error Message:", err.message);
+            <div className="auth-card switch-card">
+                <p>Have an account? <button type="button" onClick={onSwitch} className="switch-btn">Log in</button></p>
+            </div>
 
-      if (err.message.includes("already taken")) {
-        setError(err.message);
-      } else if (err.code === 'auth/email-already-in-use') {
-        setError("This email address is already registered.");
-      } else if (err.code === 'permission-denied' || err.message.includes('permission')) {
-         setError("Firestore permission denied. Please check rules again.");
-      } else {
-        setError("Failed to register. Please try again.");
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }; // handleRegister function yahaan khatam hota hai
-
-  return (
-    <div style={{ textAlign: "center", marginTop: 50 }}>
-      <h2>Register</h2>
-      <input placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)} /><br /><br />
-      <input placeholder="Username (must be unique)" value={username} onChange={(e) => setUsername(e.target.value.toLowerCase())} /><br /><br />
-      <input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} /><br /><br />
-      <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} /><br /><br />
-      <button onClick={handleRegister} disabled={isLoading}>
-        {isLoading ? "Registering..." : "Register"}
-      </button>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      {/* Login button ko toggle karne ka logic App.js se aana chahiye */}
-      {/* <p style={{ marginTop: 10 }}>Already have an account? <button onClick={...}>Login</button></p> */}
-    </div>
-  );
+            <div className="auth-bottom-info">
+                <p>from</p>
+                <p className="company-name">AChat Team</p>
+            </div>
+        </div>
+    );
 }

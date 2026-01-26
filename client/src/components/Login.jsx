@@ -1,63 +1,71 @@
-import React, { useState, useEffect } from "react";
-import { auth } from "../firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import React, { useState } from 'react';
+import { auth } from '../firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import './Login.css';
 
-export default function Login({ registrationSuccess, clearSuccessMessage }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+export default function Login({ onSwitch, registrationSuccess, clearSuccessMessage }) {
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (registrationSuccess) {
-      const timer = setTimeout(() => {
-        clearSuccessMessage();
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [registrationSuccess, clearSuccessMessage]);
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        setError("");
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+        } catch (err) {
+            setError("Invalid email or password. Please try again.");
+        }
+    };
 
-  const handleLogin = async () => {
-    setIsLoading(true);
-    setError("");
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-    } catch (err) {
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-        setError("Invalid email or password.");
-      } else {
-        setError("Failed to log in. Please try again.");
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    return (
+        <div className="auth-page">
+            <div className="auth-card">
+                <h1 className="auth-logo">AChat</h1>
+                
+                {registrationSuccess && (
+                    <div className="success-banner" onClick={clearSuccessMessage}>
+                        Registration successful! Please login.
+                    </div>
+                )}
 
-  return (
-    <div style={{ textAlign: "center", marginTop: 50 }}>
-      <h2>Login</h2>
-      {registrationSuccess && (
-        <p style={{ color: "limegreen", padding: '10px', border: '1px solid limegreen', borderRadius: '5px' }}>
-          You have successfully registered! Please log in.
-        </p>
-      )}
-      <input
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <br /><br />
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <br /><br />
-      <button onClick={handleLogin} disabled={isLoading}>
-        {isLoading ? "Logging in..." : "Login"}
-      </button>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-    </div>
-  );
+                {error && <div className="error-banner">{error}</div>}
+
+                <form className="auth-form" onSubmit={handleLogin}>
+                    <div className="input-group">
+                        <input 
+                            type="email" 
+                            placeholder="Email" 
+                            required 
+                            value={email}
+                            onChange={e => setEmail(e.target.value)} 
+                        />
+                    </div>
+                    <div className="input-group">
+                        <input 
+                            type="password" 
+                            placeholder="Password" 
+                            required 
+                            value={password}
+                            onChange={e => setPassword(e.target.value)} 
+                        />
+                    </div>
+                    <button type="submit" className="auth-btn">Log In</button>
+                </form>
+
+                <div className="auth-divider">
+                    <span>OR</span>
+                </div>
+
+                <div className="auth-footer">
+                    <p>Don't have an account? <button type="button" onClick={onSwitch} className="switch-btn">Sign up</button></p>
+                </div>
+            </div>
+            
+            <div className="auth-bottom-info">
+                <p>from</p>
+                <p className="company-name">AChat Team</p>
+            </div>
+        </div>
+    );
 }
