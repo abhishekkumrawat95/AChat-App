@@ -11,7 +11,22 @@ import { onMessage } from "firebase/messaging";
 import io from "socket.io-client";
 import './App.css';
 
-const socket = io.connect("https://achat-server.onrender.com");
+// Determine socket connection URL based on environment
+const getSocketURL = () => {
+  if (process.env.NODE_ENV === 'production') {
+    // In production, use the same origin (Vercel handles routing)
+    return window.location.origin;
+  }
+  // In development, connect to local server
+  return "http://localhost:5000";
+};
+
+const socket = io.connect(getSocketURL(), {
+  reconnection: true,
+  reconnectionDelay: 1000,
+  reconnectionDelayMax: 5000,
+  reconnectionAttempts: 5
+});
 
 export default function App() {
   const [user, setUser] = useState(null);

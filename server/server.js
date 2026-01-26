@@ -5,8 +5,14 @@ const { Server } = require("socket.io");
 const admin = require("firebase-admin"); // Ise add karein
 
 // Firebase Admin SDK ko initialize karein
-// Ensure you have the 'serviceAccountKey.json' file in this 'server' folder
-const serviceAccount = require("./serviceAccountKey.json");
+// Support both file-based and environment variable-based initialization
+let serviceAccount;
+if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+  serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+} else {
+  serviceAccount = require("./serviceAccountKey.json");
+}
+
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
 });
@@ -16,9 +22,21 @@ app.use(cors());
 
 const server = http.createServer(app);
 
+// Determine allowed origins based on environment
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "https://akchatcc.vercel.app"
+];
+
+// Add Vercel preview and production URLs if available
+if (process.env.VERCEL_URL) {
+  allowedOrigins.push(`https://${process.env.VERCEL_URL}`);
+}
+
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3000", "http://localhost:3001", "https://akchatcc.vercel.app"],
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
   },
 });
@@ -171,6 +189,7 @@ app.get("/", (req, res) => {
     res.status(200).send("AChat Server is up and running! ✅");
 });
 
-server.listen(5000, () => {
-  console.log("Server running on port 5000");
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
