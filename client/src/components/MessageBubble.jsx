@@ -8,9 +8,10 @@ const formatTimestamp = (timestamp) => {
   return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
 };
 
-const MessageBubble = ({ msg, user, onReply, onLongPress }) => {
+const MessageBubble = ({ msg, user, onReply, onLongPress, onAddReaction, chatRoomName }) => {
   const isOwnMessage = msg.user === user.email;
   const longPressEvents = useLongPress((e) => onLongPress(e, msg), () => {}, { delay: 400 });
+  const [showImageModal, setShowImageModal] = useState(false);
 
   const bubbleRef = useRef(null);
   const [swipeX, setSwipeX] = useState(0);
@@ -75,8 +76,32 @@ const MessageBubble = ({ msg, user, onReply, onLongPress }) => {
             </div>
         )}
 
-      <div className={`message-bubble`}>
+      <div 
+        className={`message-bubble`}
+      >
+        {msg.imageURL && (
+          <>
+            <img 
+              src={msg.imageURL} 
+              alt="shared" 
+              className="message-image"
+              onClick={() => setShowImageModal(true)}
+              style={{ cursor: 'pointer' }}
+            />
+            {showImageModal && (
+              <div className="image-modal" onClick={() => setShowImageModal(false)}>
+                <div className="image-modal-content" onClick={(e) => e.stopPropagation()}>
+                  <button className="image-modal-close" onClick={() => setShowImageModal(false)}>×</button>
+                  <img src={msg.imageURL} alt="full size" />
+                </div>
+              </div>
+            )}
+          </>
+        )}
         <p className="message-text">{msg.text}</p>
+        {msg.editedAt && (
+          <p className="message-edited-tag">(edited)</p>
+        )}
         <div className="message-meta">
           <span className="timestamp">{formatTimestamp(msg.timestamp)}</span>
           {isOwnMessage && (
@@ -85,6 +110,21 @@ const MessageBubble = ({ msg, user, onReply, onLongPress }) => {
             </span>
           )}
         </div>
+
+        {/* Display Reactions */}
+        {msg.reactions && Object.keys(msg.reactions).length > 0 && (
+          <div className="message-reactions">
+            {Object.entries(msg.reactions).map(([emoji, users]) => (
+              <button
+                key={emoji}
+                className="reaction-badge"
+                title={users.join(', ')}
+              >
+                {emoji} <span className="reaction-count">{users.length}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

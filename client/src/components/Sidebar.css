@@ -146,6 +146,58 @@
   margin-left: auto;
 }
 
+.mute-indicator {
+  font-size: 1.2rem;
+  margin-left: 8px;
+}
+
+.user-list-item.muted {
+  opacity: 0.6;
+}
+
+.user-list-item.archived {
+  opacity: 0.5;
+  font-style: italic;
+}
+
+.archived-chats-section {
+  border-top: 1px solid var(--border-dark);
+}
+
+.theme-light .archived-chats-section {
+  border-top: 1px solid var(--border-light);
+}
+
+.archived-toggle {
+  background: none;
+  border: none;
+  width: 100%;
+  padding: 10px 16px;
+  text-align: left;
+  color: var(--text-secondary-dark);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.archived-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.theme-light .archived-toggle {
+  color: var(--text-secondary-light);
+}
+
+.theme-light .archived-toggle:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.archived-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
 .no-results {
   padding: 20px;
   text-align: center;
@@ -163,9 +215,88 @@
   object-fit: cover;
   margin-right: 10px;
   border: 1px solid rgba(255, 255, 255, 0.1); /* Stroke for dark theme */
+  cursor: pointer;
 }
 
 /* NEW: Stroke for light theme avatar */
 .theme-light .sidebar-avatar {
   border: 1px solid var(--border-light);
+}
+
+/* Profile Picture Modal */
+.profile-picture-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.profile-picture-modal-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  max-width: 500px;
+  animation: zoomIn 0.3s ease-in-out;
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.profile-picture-large {
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid white;
+}
+
+.profile-picture-name {
+  color: white;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.profile-picture-close-btn {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 2rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: opacity 0.2s;
+}
+
+.profile-picture-close-btn:hover {
+  opacity: 0.7;
 }

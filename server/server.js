@@ -105,6 +105,66 @@ io.on("connection", (socket) => {
       console.log("A user disconnected:", socket.id);
     }
   });
+
+  // Typing indicator events
+  socket.on("typing", (data) => {
+    // Send typing notification to the recipient
+    for (let [id, sock] of io.sockets.sockets) {
+      if (sock.username === data.to) {
+        sock.emit("typing", data);
+        break;
+      }
+    }
+  });
+
+  socket.on("stop_typing", (data) => {
+    // Send stop typing notification to the recipient
+    for (let [id, sock] of io.sockets.sockets) {
+      if (sock.username === data.to) {
+        sock.emit("stop_typing", data);
+        break;
+      }
+    }
+  });
+
+  // User online/offline status
+  socket.on("user_online", (data) => {
+    socket.user_email = data.email;
+    socket.user_name = data.name;
+    io.emit("user_online", { email: data.email, name: data.name });
+    console.log(`${data.email} is now online`);
+  });
+
+  socket.on("user_offline", (data) => {
+    io.emit("user_offline", { email: data.email });
+    console.log(`${data.email} is now offline`);
+  });
+
+  // Handle reaction events
+  socket.on("add_reaction", (data) => {
+    // Broadcast reaction to all connected users
+    io.emit("reaction_updated", {
+      messageId: data.messageId,
+      roomName: data.roomName,
+      emoji: data.emoji,
+      email: data.email,
+      name: data.name,
+      action: 'add'
+    });
+    console.log(`Reaction added: ${data.emoji} by ${data.email} on message ${data.messageId}`);
+  });
+
+  socket.on("remove_reaction", (data) => {
+    // Broadcast reaction removal to all connected users
+    io.emit("reaction_updated", {
+      messageId: data.messageId,
+      roomName: data.roomName,
+      emoji: data.emoji,
+      email: data.email,
+      action: 'remove'
+    });
+    console.log(`Reaction removed: ${data.emoji} by ${data.email} on message ${data.messageId}`);
+  });
 });
 
 app.get("/", (req, res) => {

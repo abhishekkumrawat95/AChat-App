@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { db } from "../firebase";
-import { collection, query, where, getDocs, writeBatch, doc } from "firebase/firestore";
+import { collection, query, where, getDocs, writeBatch, doc, onSnapshot } from "firebase/firestore";
 import ContextMenu from "./ContextMenu";
 import UserListItem from "./UserListItem";
 import ConfirmationModal from "./ConfirmationModal";
@@ -10,8 +10,13 @@ export default function Sidebar({ user, chatHistory = [], onlineUserEmails, onSe
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [unreadCounts, setUnreadCounts] = useState({});
-  const [menu, setMenu] = useState({ visible: false, x: 0, y: 0, contextData: null, options: [] }); // Use contextData instead of selectedUser
+  const [menu, setMenu] = useState({ visible: false, x: 0, y: 0, contextData: null, options: [] });
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+  const [showProfilePicture, setShowProfilePicture] = useState(false);
+  const [selectedUserForPic, setSelectedUserForPic] = useState(null);
+  const [mutedChats, setMutedChats] = useState({});
+  const [archivedChats, setArchivedChats] = useState({});
+  const [showArchived, setShowArchived] = useState(false);
 
   // Modified to accept the userToDelete directly
   const performChatDeletion = async (userToDelete) => {
@@ -63,14 +68,33 @@ export default function Sidebar({ user, chatHistory = [], onlineUserEmails, onSe
      console.log(`Chat with ${userToClear.email} cleared successfully.`);
   };
 
+  const toggleMuteChat = (user) => {
+    setMutedChats(prev => ({
+      ...prev,
+      [user.email]: !prev[user.email]
+    }));
+  };
+
+  const toggleArchiveChat = (user) => {
+    setArchivedChats(prev => ({
+      ...prev,
+      [user.email]: !prev[user.email]
+    }));
+  };
+
   // Modified: Options now get the user passed directly into their onClick
   const onLongPress = (e, userPressed) => { // Renamed 'u' to 'userPressed' for clarity
     e.preventDefault();
     const touchOrMouseEvent = e.touches ? e.touches[0] : e;
 
+    const isMuted = mutedChats[userPressed.email];
+    const isArchived = archivedChats[userPressed.email];
+
     const options = [
       // Pass userPressed directly to the handler
       { label: "Clear Chat", onClick: () => handleClearChat(userPressed) },
+      { label: isMuted ? "Unmute" : "Mute", onClick: () => toggleMuteChat(userPressed) },
+      { label: isArchived ? "Unarchive" : "Archive", onClick: () => toggleArchiveChat(userPressed) },
       // Pass userPressed directly to the handler
       { label: "Delete Chat", className: "destructive", onClick: () => handleDeleteChat(userPressed) },
     ];
@@ -105,6 +129,27 @@ export default function Sidebar({ user, chatHistory = [], onlineUserEmails, onSe
     return () => socket.off("new_message_notification", handleNotification);
   }, [socket, chatWith]);
 
+  // Listen for real-time profile updates (avatar/profile picture changes)
+  useEffect(() => {
+    if (!chatHistory || chatHistory.length === 0) return;
+
+    const unsubscribers = chatHistory.map(chatUser => {
+      const userDocRef = doc(db, "users", chatUser.uid || chatUser.email);
+      return onSnapshot(userDocRef, (docSnapshot) => {
+        if (docSnapshot.exists()) {
+          const updatedUserData = docSnapshot.data();
+          // Update chat history with new profile data
+          // This will trigger re-render and update avatars in real-time
+          console.log(`Profile updated for ${updatedUserData.email}: photo=${updatedUserData.photoURL ? 'yes' : 'no'}`);
+        }
+      });
+    });
+
+    return () => {
+      unsubscribers.forEach(unsub => unsub());
+    };
+  }, [chatHistory]);
+
   const handleSearch = async (e) => {
     const term = e.target.value;
     setSearchTerm(term);
@@ -125,7 +170,10 @@ export default function Sidebar({ user, chatHistory = [], onlineUserEmails, onSe
   };
 
   const isSearching = searchTerm.trim() !== "";
-  const usersToDisplay = isSearching ? searchResults : chatHistory;
+  const usersToDisplay = isSearching ? searchResults : chatHistory.filter(u => !archivedChats[u.email]);
+  const archivedUsers = chatHistory.filter(u => archivedChats[u.email]);
+
+  const defaultAvatar = "https://static.vecteezy.com/system/resources/previews/020/765/399/non_2x/default-profile-account-unknown-icon-black-silhouette-free-vector.jpg";
 
   return (
     <>
@@ -138,6 +186,18 @@ export default function Sidebar({ user, chatHistory = [], onlineUserEmails, onSe
       />
       {/* ContextMenu now receives options directly from menu state */}
       <ContextMenu menu={menu} options={menu.options} />
+      
+      {/* Profile Picture Modal */}
+      {showProfilePicture && selectedUserForPic && (
+        <div className="profile-picture-modal" onClick={() => setShowProfilePicture(false)}>
+          <div className="profile-picture-modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="profile-picture-close-btn" onClick={() => setShowProfilePicture(false)}>×</button>
+            <img src={selectedUserForPic.photoURL || defaultAvatar} alt={selectedUserForPic.name} className="profile-picture-large" />
+            <p className="profile-picture-name">{selectedUserForPic.name}</p>
+          </div>
+        </div>
+      )}
+      
       <aside className="sidebar">
         <header className="sidebar-header">
           <button className="menu-button" onClick={onProfileOpen}>☰</button>
@@ -146,6 +206,34 @@ export default function Sidebar({ user, chatHistory = [], onlineUserEmails, onSe
         <div className="search-container">
           <input type="text" placeholder="Search for users..." value={searchTerm} onChange={handleSearch} className="search-input"/>
         </div>
+        {archivedUsers.length > 0 && (
+          <div className="archived-chats-section">
+            <button className="archived-toggle" onClick={() => setShowArchived(!showArchived)}>
+              {showArchived ? '▼' : '▶'} Archived ({archivedUsers.length})
+            </button>
+            {showArchived && (
+              <ul className="user-list archived-list">
+                {archivedUsers.map((u) => (
+                  <UserListItem
+                    key={u.uid || u.email}
+                    u={u}
+                    isOnline={onlineUserEmails.includes(u.email)}
+                    unreadCount={unreadCounts[u.email] || 0}
+                    onClick={() => handleSelectChat(u)}
+                    onLongPress={(event) => onLongPress(event, u)}
+                    onAvatarClick={() => {
+                      setSelectedUserForPic(u);
+                      setShowProfilePicture(true);
+                    }}
+                    isSearching={isSearching}
+                    isMuted={mutedChats[u.email]}
+                    isArchived={true}
+                  />
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
         <ul className="user-list">
             {usersToDisplay.length === 0 && !isSearching && <li className="no-results">No chats yet. Search to begin.</li>}
             {usersToDisplay.length === 0 && isSearching && <li className="no-results">No users found.</li>}
@@ -156,9 +244,13 @@ export default function Sidebar({ user, chatHistory = [], onlineUserEmails, onSe
                 isOnline={onlineUserEmails.includes(u.email)}
                 unreadCount={unreadCounts[u.email] || 0}
                 onClick={() => handleSelectChat(u)}
-                // Pass the event and user object to onLongPress
                 onLongPress={(event) => onLongPress(event, u)}
+                onAvatarClick={() => {
+                  setSelectedUserForPic(u);
+                  setShowProfilePicture(true);
+                }}
                 isSearching={isSearching}
+                isMuted={mutedChats[u.email]}
               />
             ))}
         </ul>

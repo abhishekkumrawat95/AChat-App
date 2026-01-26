@@ -4,9 +4,10 @@ import Register from "./components/Register";
 import Sidebar from "./components/Sidebar";
 import ChatWindow from "./components/ChatWindow";
 import ProfileSidebar from "./components/ProfileSidebar";
-import { auth, db, requestForToken } from "./firebase";
+import { auth, db, requestForToken, messaging } from "./firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, collection, query, where, getDocs, orderBy, onSnapshot, updateDoc } from "firebase/firestore";
+import { onMessage } from "firebase/messaging";
 import io from "socket.io-client";
 import './App.css';
 
@@ -23,6 +24,8 @@ export default function App() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [theme, setTheme] = useState('dark');
   const [isChatRendered, setIsChatRendered] = useState(false);
+  const [fontSize, setFontSize] = useState('medium');
+  const [messageSound, setMessageSound] = useState(true);
 
   const toggleTheme = () => {
     setTheme(currentTheme => (currentTheme === 'dark' ? 'light' : 'dark'));
@@ -58,6 +61,10 @@ export default function App() {
           setIsLoading(false);
         });
         socket.emit("login", currentUser.email);
+        socket.emit("user_online", { email: currentUser.email, name: currentUser.displayName || 'User' });
+        
+        // Update last seen (reuse userDocRef)
+        updateDoc(userDocRef, { lastSeen: new Date() }).catch(err => console.log("Last seen update skipped:", err));
       } else {
         setUser(null);
         setIsLoading(false);
@@ -102,6 +109,25 @@ export default function App() {
             await updateDoc(userDocRef, { fcmToken: fcmToken });
             console.log("SUCCESS: Token Firestore mein save ho gaya!");
           }
+
+          // Set up listener for foreground messages
+          onMessage(messaging, (payload) => {
+            console.log("Message received in foreground:", payload);
+            
+            const notificationTitle = payload.notification?.title || "New Message";
+            const notificationOptions = {
+              body: payload.notification?.body || "You have a new message",
+              icon: payload.notification?.icon || "https://static.vecteezy.com/system/resources/previews/020/765/399/non_2x/default-profile-account-unknown-icon-black-silhouette-free-vector.jpg",
+              badge: "https://static.vecteezy.com/system/resources/previews/020/765/399/non_2x/default-profile-account-unknown-icon-black-silhouette-free-vector.jpg",
+              tag: "chat-notification",
+              requireInteraction: false
+            };
+
+            if (Notification.permission === 'granted') {
+              new Notification(notificationTitle, notificationOptions);
+              console.log("Notification displayed in foreground");
+            }
+          });
         }
       } catch (error) {
         console.error("ERROR: Token save karte waqt error aaya:", error);
@@ -211,8 +237,16 @@ export default function App() {
   }
 
   return (
-    <div className={`app-container ${chatWith ? 'mobile-chat-active' : ''} theme-${theme}`}>
-      <ProfileSidebar user={user} isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} onThemeToggle={toggleTheme} />
+    <div className={`app-container ${chatWith ? 'mobile-chat-active' : ''} theme-${theme}`} style={{ fontSize: fontSize === 'small' ? '14px' : fontSize === 'large' ? '18px' : '16px' }}>
+      <ProfileSidebar 
+        user={user} 
+        isOpen={isProfileOpen} 
+        onClose={() => setIsProfileOpen(false)} 
+        onThemeToggle={toggleTheme}
+        onFontSizeChange={setFontSize}
+        onMessageSoundChange={setMessageSound}
+        socket={socket}
+      />
       <Sidebar
         user={user}
         chatHistory={chatHistory}
@@ -224,7 +258,7 @@ export default function App() {
       />
       <main className="chat-area">
         {chatWith && isChatRendered ? (
-          <ChatWindow user={user} chatWith={chatWith} socket={socket} onBack={handleBack} />
+          <ChatWindow user={user} chatWith={chatWith} socket={socket} onBack={handleBack} messageSound={messageSound} />
         ) : (
           !chatWith && (
             <div className="welcome-screen">
