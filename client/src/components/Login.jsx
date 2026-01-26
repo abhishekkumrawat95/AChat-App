@@ -11,10 +11,37 @@ export default function Login({ onSwitch, registrationSuccess, clearSuccessMessa
     const handleLogin = async (e) => {
         e.preventDefault();
         setError("");
+        
+        // Validate inputs
+        if (!email.trim() || !password.trim()) {
+            setError("Please enter both email and password.");
+            return;
+        }
+
         try {
-            await signInWithEmailAndPassword(auth, email, password);
+            console.log("Attempting to login with email:", email);
+            const result = await signInWithEmailAndPassword(auth, email, password);
+            console.log("Login successful:", result);
         } catch (err) {
-            setError("Invalid email or password. Please try again.");
+            console.error("Login error:", err.code, err.message);
+            
+            // Provide more specific error messages
+            switch(err.code) {
+                case 'auth/user-not-found':
+                    setError("No account found with this email.");
+                    break;
+                case 'auth/wrong-password':
+                    setError("Incorrect password.");
+                    break;
+                case 'auth/invalid-email':
+                    setError("Invalid email format.");
+                    break;
+                case 'auth/user-disabled':
+                    setError("This account has been disabled.");
+                    break;
+                default:
+                    setError("Login failed: " + err.message);
+            }
         }
     };
 

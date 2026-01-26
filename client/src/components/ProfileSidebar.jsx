@@ -12,19 +12,45 @@ export default function ProfileSidebar({ user, isOpen, onClose, onThemeToggle })
   const fileInputRef = useRef(null);
 
   const handleImageUpload = async (e) => {
-    // ... upload logic remains the same
     const file = e.target.files[0];
-    if (!file || !user) return;
-    const storageRef = ref(storage, `profile_pictures/${user.uid}`);
+    if (!file || !user) {
+      alert("Please select a file and make sure you're logged in.");
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert("Please select a valid image file.");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image size should be less than 5MB.");
+      return;
+    }
+
     try {
+      const storageRef = ref(storage, `profile_pictures/${user.uid}/${Date.now()}`);
+      console.log("Uploading to:", storageRef.fullPath);
+      
       await uploadBytes(storageRef, file);
+      console.log("Upload successful, getting download URL...");
+      
       const photoURL = await getDownloadURL(storageRef);
+      console.log("Download URL:", photoURL);
+      
       const userDocRef = doc(db, "users", user.uid);
       await updateDoc(userDocRef, { photoURL });
+      console.log("User document updated successfully");
+      
+      alert("Profile picture updated successfully!");
       onClose();
     } catch (error) {
       console.error("Error uploading image:", error);
-      alert("Failed to upload image.");
+      console.error("Error code:", error.code);
+      console.error("Error message:", error.message);
+      alert(`Failed to upload image: ${error.message}`);
     }
   };
 

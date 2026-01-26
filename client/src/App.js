@@ -48,17 +48,20 @@ export default function App() {
         onSnapshot(userDocRef, (doc) => {
           if (doc.exists()) {
             setUser({ ...currentUser, ...doc.data() });
+            setIsLoading(false); // Set to false only after user data is loaded
           } else {
             console.log("User authenticated but Firestore document not found yet.");
+            setIsLoading(false);
           }
         }, (error) => {
           console.error("Error listening to user document:", error);
+          setIsLoading(false);
         });
         socket.emit("login", currentUser.email);
       } else {
         setUser(null);
+        setIsLoading(false);
       }
-      setIsLoading(false);
     });
     socket.on("update_users", (emails) => setOnlineUserEmails(emails));
     return () => {

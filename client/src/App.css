@@ -71,6 +71,8 @@ body {
   height: 100vh;
   width: 100vw;
   font-size: 1.5rem;
+  background-color: #000000;
+  color: #ffffff;
 }
 
 @media (max-width: 768px) {
