@@ -16,12 +16,17 @@ export default function ChatWindow({ user, chatWith, socket, onBack }) {
 
   useEffect(() => {
     if (!chatWith) return;
+    
+    // Clear previous messages when switching to a new chat
+    setMessages([]);
+    
     const roomName = [user.email, chatWith.email].sort().join("_");
     const messagesRef = collection(db, "chats", roomName, "messages");
     const q = query(messagesRef, orderBy("timestamp", "desc"));
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const msgs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      console.log("Messages loaded:", msgs);
       setMessages(msgs);
 
       const unreadMessages = msgs.filter(msg => msg.user !== user.email && msg.status !== 'seen');

@@ -6,8 +6,12 @@ export default function useLongPress(onLongPress, onClick, { delay = 500 } = {})
     const startPos = useRef({ x: 0, y: 0 });
     const isLongPress = useRef(false);
     const isScrolling = useRef(false);
+    const isMousePressed = useRef(false);
 
     const start = useCallback((event) => {
+        // Only start if it's a mouse down or touch start
+        isMousePressed.current = true;
+        
         // Get initial touch/mouse position
         const point = event.touches ? event.touches[0] : event;
         startPos.current = { x: point.clientX, y: point.clientY };
@@ -53,14 +57,31 @@ export default function useLongPress(onLongPress, onClick, { delay = 500 } = {})
             clearTimeout(timeout.current);
         }
 
-        // IMPORTANT: Trigger the onClick function ONLY if it was NOT a long press AND it was NOT a scroll
-        if (!isLongPress.current && !isScrolling.current) {
+        // IMPORTANT: Trigger the onClick function ONLY if:
+        // 1. Mouse/touch was actually pressed (not just hover)
+        // 2. It was NOT a long press 
+        // 3. It was NOT a scroll
+        if (isMousePressed.current && !isLongPress.current && !isScrolling.current) {
             onClick(event);
         }
 
-        // Reset start position for the next interaction
+        // Reset state for the next interaction
+        isMousePressed.current = false;
         startPos.current = { x: 0, y: 0 };
     }, [onClick]);
+
+    const leave = useCallback((event) => {
+        // Clear the timer when leaving the element
+        if (timeout.current) {
+            clearTimeout(timeout.current);
+        }
+        
+        // Reset state without triggering onClick
+        isMousePressed.current = false;
+        isLongPress.current = false;
+        isScrolling.current = false;
+        startPos.current = { x: 0, y: 0 };
+    }, []);
 
     return {
         onMouseDown: start,
@@ -69,6 +90,6 @@ export default function useLongPress(onLongPress, onClick, { delay = 500 } = {})
         onTouchMove: move,
         onMouseUp: end,
         onTouchEnd: end,
-        onMouseLeave: end, // Also treat leaving the element as an 'end' event to prevent sticky states
+        onMouseLeave: leave,
     };
 }

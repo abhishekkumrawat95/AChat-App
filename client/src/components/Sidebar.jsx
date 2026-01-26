@@ -117,7 +117,7 @@ export default function Sidebar({ user, chatHistory = [], onlineUserEmails, onSe
     const q = query(usersRef, where("username", ">=", lowerCaseTerm), where("username", "<=", lowerCaseTerm + '\uf8ff'));
     try {
         const querySnapshot = await getDocs(q);
-        const users = querySnapshot.docs.map(doc => doc.data()).filter(u => u.email !== user.email);
+        const users = querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() })).filter(u => u.email !== user.email);
         setSearchResults(users);
     } catch (error) {
         console.error("Error searching users:", error);
