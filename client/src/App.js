@@ -11,10 +11,12 @@ import { onMessage } from "firebase/messaging";
 import io from "socket.io-client";
 import './App.css';
 
-// Determine socket connection URL based on environment
+// Determine socket connection URL based on environment or explicit env var
 const getSocketURL = () => {
+  // If you set REACT_APP_SERVER_URL in Vercel (or locally), use it.
+  if (process.env.REACT_APP_SERVER_URL) return process.env.REACT_APP_SERVER_URL;
   if (process.env.NODE_ENV === 'production') {
-    // In production, use the same origin (Vercel handles routing)
+    // In production, default to same origin (useful if you host server on same domain)
     return window.location.origin;
   }
   // In development, connect to local server

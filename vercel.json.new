@@ -1,5 +1,7 @@
 {
   "version": 2,
+  "buildCommand": "cd client && npm install && npm run build",
+  "installCommand": "npm install && cd client && npm install && cd ../server && npm install",
   "builds": [
     {
       "src": "client/package.json",
@@ -9,14 +11,14 @@
       }
     },
     {
-      "src": "api/socket.js",
+      "src": "server/server.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
-      "src": "/socket.io/(.*)",
-      "dest": "api/socket.js"
+      "src": "/api/(.*)",
+      "dest": "server/server.js"
     },
     {
       "src": "/(.*)",
