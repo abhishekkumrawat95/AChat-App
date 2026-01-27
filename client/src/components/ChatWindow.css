@@ -10,13 +10,22 @@
   background-color: var(--background-light);
 }
 
-/* Mobile dark theme background pattern */
+/* Mobile theme background patterns */
 @media (max-width: 768px) {
   .theme-dark .chat-window-container {
-    background-image: url('../../public/chat-bg-dark.svg');
+    background-image: url('../../public/chat-bg-dark.jpg');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
+    background-repeat: no-repeat;
+  }
+  
+  .theme-light .chat-window-container {
+    background-image: url('../../public/chat-bg-light.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
   }
 }
 
