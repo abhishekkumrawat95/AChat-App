@@ -10,6 +10,16 @@
   background-color: var(--background-light);
 }
 
+/* Mobile dark theme background pattern */
+@media (max-width: 768px) {
+  .theme-dark .chat-window-container {
+    background-image: url('../../public/chat-bg-dark.svg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+  }
+}
+
 .chat-header {
   padding: 4px 12px;
   border-bottom: 1px solid var(--border-dark);
