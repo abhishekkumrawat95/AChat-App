@@ -16,8 +16,8 @@ const getSocketURL = () => {
   // If you set REACT_APP_SERVER_URL in Vercel (or locally), use it.
   if (process.env.REACT_APP_SERVER_URL) return process.env.REACT_APP_SERVER_URL;
   if (process.env.NODE_ENV === 'production') {
-    // In production, default to same origin (useful if you host server on same domain)
-    return window.location.origin;
+    // In production, use Render server URL
+    return "https://achat-server-x3bn.onrender.com";
   }
   // In development, connect to local server
   return "http://localhost:5000";
