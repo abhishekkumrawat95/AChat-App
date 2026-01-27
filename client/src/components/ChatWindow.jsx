@@ -45,7 +45,6 @@ export default function ChatWindow({ user, chatWith, socket, onBack, messageSoun
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [selectedImage, setSelectedImage] = useState(false);
-  const [showImagePreview] = useState(null);
   const [isOnline, setIsOnline] = useState(false);
   const [lastSeen, setLastSeen] = useState(null);
   const imageInputRef = useRef(null);
